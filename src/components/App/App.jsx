@@ -21,6 +21,8 @@ import LoginPage from '../LoginPage/LoginPage';
 import RegisterPage from '../RegisterPage/RegisterPage';
 
 import './App.css';
+import DashboardScreen from '../DashboardScreen/DashboardScreen';
+import GameplayScreen from '../GameplayScreen/GameplayScreen';
 
 function App() {
   const dispatch = useDispatch();
@@ -53,11 +55,19 @@ function App() {
             If the user is not logged in, the ProtectedRoute will show the LoginPage (component).
             Even though it seems like they are different pages, the user is always on localhost:5173/user */}
           <ProtectedRoute
-            // logged in shows UserPage else shows LoginPage
+            // This will show logged in user the dashboard screen
             exact
-            path="/user"
+            path="/dashboard"
           >
-            <UserPage />
+            <DashboardScreen />
+          </ProtectedRoute>
+
+          <ProtectedRoute
+            // This will show logged in user the gameplayscreen
+            exact
+            path="/game"
+          >
+            <GameplayScreen />
           </ProtectedRoute>
 
           <ProtectedRoute
@@ -74,8 +84,8 @@ function App() {
           >
             {user.id ?
               // If the user is already logged in, 
-              // redirect to the /user page
-              <Redirect to="/user" />
+              // redirect to the /dashboard page
+              <Redirect to="/dashboard" />
               :
               // Otherwise, show the login page
               <LoginPage />
@@ -88,8 +98,8 @@ function App() {
           >
             {user.id ?
               // If the user is already logged in, 
-              // redirect them to the /user page
-              <Redirect to="/user" />
+              // redirect them to the /dashboard page
+              <Redirect to="/dashboard" />
               :
               // Otherwise, show the registration page
               <RegisterPage />
@@ -102,8 +112,8 @@ function App() {
           >
             {user.id ?
               // If the user is already logged in, 
-              // redirect them to the /user page
-              <Redirect to="/user" />
+              // redirect them to the /dashboard page
+              <Redirect to="/dashboard" />
               :
               // Otherwise, show the Landing page
               <LandingPage />
