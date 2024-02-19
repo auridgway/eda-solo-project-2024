@@ -6,11 +6,16 @@
     "node": "18.x"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/nunito-sans": "^5.0.8",
+    "@mui/material": "^5.15.10",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cookie-session": "^2.0.0",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
+    "framer-motion": "^11.0.5",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "pg": "^8.5.1",
