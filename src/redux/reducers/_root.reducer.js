@@ -5,6 +5,7 @@ import games from './games.reducer';
 import players from './players.reducer';
 import turns from './turns.reducer';
 import rounds from './rounds.reducer';
+import diceInfo from './diceInfo.reducer'
 
 // rootReducer is the primary reducer for our entire project
 // It bundles up all of the other reducers so our project can use them.
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   players,
   turns,
   rounds,
+  diceInfo,
 });
 
 export default rootReducer;

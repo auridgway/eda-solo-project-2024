@@ -6,6 +6,7 @@ import gamesSaga from './games.saga';
 import playersSaga from './players.saga';
 import roundsSaga from './rounds.saga';
 import turnsSaga from './turns.saga';
+import diceInfoSaga from './diceInfo.saga'
 
 // rootSaga is the primary saga.
 // It bundles up all of the other sagas so our project can use them.
@@ -23,5 +24,6 @@ export default function* rootSaga() {
     playersSaga(),
     roundsSaga(),
     turnsSaga(),
+    diceInfoSaga(),
   ]);
 }
