@@ -104,10 +104,53 @@ function checkMelds(diceValues) {
     }
     //FOUR LOCKED DICE
   } else if (currentDice.length === 4) {
+    let tempScore = 0;
+    // 4 of any number
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       return 1000;
+      // four of any number with pairs
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value) {
+      return 1500;
+      // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
+      if (currentDice[0].value === 1) {
+        tempScore += 300;
+      } else if (currentDice[0].value === 2) {
+        tempScore += 200;
+      } else if (currentDice[0].value === 3) {
+        tempScore += 300;
+      } else if (currentDice[0].value === 4) {
+        tempScore += 400;
+      } else if (currentDice[0].value === 5) {
+        tempScore += 500;
+      } else if (currentDice[0].value === 6) {
+        tempScore += 600;
+      }
+      // if any of these above match we don't want to add on additional points so we shift the first three items since they all match eachother
+      // will this break the bottom if statement because it will have some things that are undefined?
+      for (let i = 0; i < 3; i++) {
+        currentDice.shift();
+      }
+      // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
+    } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
+      if (currentDice[1].value === 1) {
+        tempScore += 300;
+      } else if (currentDice[1].value === 2) {
+        tempScore += 200;
+      } else if (currentDice[1].value === 3) {
+        tempScore += 300;
+      } else if (currentDice[1].value === 4) {
+        tempScore += 400;
+      } else if (currentDice[1].value === 5) {
+        tempScore += 500;
+      } else if (currentDice[1].value === 6) {
+        tempScore += 600;
+      }
+      // if any of these above match we don't want to add on additional points so we pop the last three items since they all match eachother
+      for (let i = 0; i < 3; i++) {
+        currentDice.pop();
+      }
     } else {
-      let tempScore = 0;
       for (const dice of currentDice) {
         if (dice.value === 1) {
           tempScore += 100;
@@ -121,12 +164,76 @@ function checkMelds(diceValues) {
         return tempScore;
       }
     }
-    //FIVE LOCKED DICE
-  } else if (currentDice.length === 5) {
+  }
+  //FIVE LOCKED DICE
+  else if (currentDice.length === 5) {
+    let tempScore = 0;
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
       return 2000;
+      // 4 of any number
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
+      tempScore += 1000;
+      // four of any number with pairs
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value) {
+      tempScore += 1500;
+      // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
+      if (currentDice[0].value === 1) {
+        tempScore += 300;
+      } else if (currentDice[0].value === 2) {
+        tempScore += 200;
+      } else if (currentDice[0].value === 3) {
+        tempScore += 300;
+      } else if (currentDice[0].value === 4) {
+        tempScore += 400;
+      } else if (currentDice[0].value === 5) {
+        tempScore += 500;
+      } else if (currentDice[0].value === 6) {
+        tempScore += 600;
+      }
+      // if any of these above match we don't want to add on additional points so we shift the first three items since they all match eachother
+      // will this break the bottom if statement because it will have some things that are undefined?
+      for (let i = 0; i < 3; i++) {
+        currentDice.shift();
+      }
+      // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
+    } else if (currentDice.length > 3 && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
+      if (currentDice[1].value === 1) {
+        tempScore += 300;
+      } else if (currentDice[2].value === 2) {
+        tempScore += 200;
+      } else if (currentDice[2].value === 3) {
+        tempScore += 300;
+      } else if (currentDice[2].value === 4) {
+        tempScore += 400;
+      } else if (currentDice[2].value === 5) {
+        tempScore += 500;
+      } else if (currentDice[2].value === 6) {
+        tempScore += 600;
+      }
+      // if any of these above match we don't want to add on additional points so we pop the last three items since they all match eachother
+      for (let i = 0; i < 3; i++) {
+        currentDice.pop();
+      }
+      // this checks for a middle three pair match
+    } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
+      if (currentDice[2].value === 1) {
+        tempScore += 300;
+      } else if (currentDice[2].value === 2) {
+        tempScore += 200;
+      } else if (currentDice[2].value === 3) {
+        tempScore += 300;
+      } else if (currentDice[2].value === 4) {
+        tempScore += 400;
+      } else if (currentDice[2].value === 5) {
+        tempScore += 500;
+      } else if (currentDice[2].value === 6) {
+        tempScore += 600;
+      }
+      // if any of these above match we don't want to add on additional points so we grab the first and last items since the middle match eachother
+      currentDice = currentDice.slice(0, 1).concat(currentDice.slice(4, 5));
+
     } else {
-      let tempScore = 0;
       for (const dice of currentDice) {
         if (dice.value === 1) {
           tempScore += 100;
@@ -140,10 +247,42 @@ function checkMelds(diceValues) {
         return tempScore;
       }
     }
+
     //SIX LOCKED DICE
   } else if (currentDice.length === 6) {
+    // 6 in a row
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5].value) {
       return 3000;
+      // a straight 1-6
+    } else if (currentDice[0].value === 1 && currentDice[1].value === 2 && currentDice[2].value === 3 && currentDice[3].value === 4 && currentDice[4].value === 5 && currentDice[5].value === 6) {
+      return 1500;
+      // three pairs
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value && currentDice[4].value === currentDice[5].value) {
+      return 1500;
+      // two triplets
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5]) {
+      return 2500;
+      // here we see if there are three in a row anywhere then remove them from the current dice so they don't get scored again
+    } else if (checkForThreeInRow(currentDice).isPresent) {
+      let endingIndex = checkForThreeInRow(currentDice.endingIndex)
+      if (endingIndex === 2) {
+        currentDice = currentDice.slice(2, 5);
+      } else if (endingIndex === 3) {
+        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(3, 5));
+      } else if (endingIndex === 4) {
+        currentDice = currentDice.slice(0, 2).concat(currentDice.slice(4, 5));
+      } else if (endingIndex === 5) {
+        currentDice = currentDice.slice(0, 3);
+      }
+    } else if (checkForFourInRow(currentDice).isPresent) {
+      let endingIndex = checkForFourInRow(currentDice.endingIndex)
+      if (endingIndex === 3) {
+        currentDice = currentDice.slice(3, 5);
+      } else if (endingIndex === 4) {
+        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(4, 5));
+      } else if (endingIndex === 5) {
+        currentDice = currentDice.slice(0, 2);
+      }
     } else {
       let tempScore = 0;
       for (const dice of currentDice) {
@@ -161,5 +300,37 @@ function checkMelds(diceValues) {
     }
   }
 }
+// this function checks for three dice in a row out of 6 dice
+function checkForThreeInRow(dice) {
+  let last = null;
+  let count = 0;
+  for (let i = 0; i < dice.length; i++) {
+    if (dice[i] != last) {
+      last = dice[i];
+      count = 0;
+    }
+    count += 1;
+    if (3 <= count) {
+      return { isPresent: true, endingIndex: i };
+    }
+  }
+  return { isPresent: false };
+}
+function checkForFourInRow(dice) {
+  let last = null;
+  let count = 0;
+  for (let i = 0; i < dice.length; i++) {
+    if (dice[i] != last) {
+      last = dice[i];
+      count = 0;
+    }
+    count += 1;
+    if (4 <= count) {
+      return { isPresent: true, endingIndex: i };
+    }
+  }
+  return { isPresent: false };
+}
+
 
 module.exports = router;
