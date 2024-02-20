@@ -1,5 +1,6 @@
 const express = require('express');
 const pool = require('../modules/pool');
+const { rejectUnauthenticated } = require('../modules/authentication-middleware');
 const router = express.Router();
 
 
@@ -22,7 +23,7 @@ const router = express.Router();
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user/', (req, res) => {
+router.get('/user/', rejectUnauthenticated, (req, res) => {
   // GET route code here
   const sql = `select games.id, games.time as "created_at", games.winner_id, games.status, games.owner_id, players.user_id as 
   user_in_game, players.user_resigned, games.lobby_name, games.passphrase, rounds.id as round_id, rounds.round_number, 
@@ -46,20 +47,25 @@ router.get('/user/', (req, res) => {
 /**
  * POST route template
  */
-// this is called when people click the save score button
-router.post('/turn/:gameId', (req, res) => {
+// this is called every time roll or save score is pressed and it will check to see which option the player would like to use
+router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   // POST route code here
+  const sql = ``;
+  const gameData = req.body;
+  if (gameData.button === 'roll') {
 
+  } else if (gameData.button === 'save') {
 
+  }
 });
 
-router.post('/lock', (req, res) => {
+router.post('/lock', rejectUnauthenticated, (req, res) => {
   // POST route code here
   // req.body NEEDS to be in this format [{values: x, locked: x}, ...] just send all dice when you send this request
   const diceValues = req.body;
 
-  // 0 means no scoring and anything else means your dice scored
-  res.send({score:checkMelds(diceValues),dice:diceValues});
+  // 0 means no scoring and anything else means your dice scored - a zero score will reflect on the clients end
+  res.send({ score: checkMelds(diceValues), dice: diceValues });
 
 });
 // test data for melds
