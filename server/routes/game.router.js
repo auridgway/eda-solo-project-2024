@@ -191,6 +191,8 @@ function checkMelds(diceValues) {
       // two triplets
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5]) {
       return 2500;
+    } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[4].value === currentDice[5].value || currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5].value) {
+      return 1500;
       // here we see if there are three in a row anywhere then remove them from the current dice so they don't get scored again
     } else if (checkForXInRow(currentDice, 5).isPresent) {
       let endingIndex = checkForXInRow(currentDice, 5).endingIndex
