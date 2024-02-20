@@ -17,20 +17,19 @@ const router = express.Router();
 // check to see if current turn is saving their score then post the score accordingly and send back user info (reply with the same object we send to redux)
 // if they've farkled or saved their score then continue on to the next player and mark them as having their turn taken
 
-
-
 /**
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user/', rejectUnauthenticated, (req, res) => {
+router.get('/user/', (req, res) => {
   // GET route code here
-  const sql = `select games.id, games.time as "created_at", games.winner_id, games.status, games.owner_id, players.user_id as 
-  user_in_game, players.user_resigned, games.lobby_name, games.passphrase, rounds.id as round_id, rounds.round_number, 
+  const sql = `select games.id, games.time as "created_at", games.winner_id, games.status, games.owner_id, 
+  players.user_id as user_in_game, (SELECT count(*) from "players" where "game_id"="games"."id") as num_players, 
+  players.user_resigned, games.lobby_name, games.passphrase, rounds.id as round_id, rounds.round_number, 
   rounds_players.player_id as current_player, rounds_players.current_score, rounds_players.has_played, rounds_players.rolls, 
   rounds_players.farkle, rounds_players.d1_locked, rounds_players.d1_val, rounds_players.d2_locked, rounds_players.d2_val, 
   rounds_players.d3_locked, rounds_players.d3_val, rounds_players.d4_locked, rounds_players.d4_val, rounds_players.d5_locked, 
-  rounds_players.d5_val, rounds_players.d6_locked, rounds_players.d6_val  from games
+  rounds_players.d5_val, rounds_players.d6_locked, rounds_players.d6_val from games
   join players on players.game_id = games.id
   join rounds on rounds.game_id = games.id
   join rounds_players on player_id=players.id;`
@@ -43,6 +42,16 @@ router.get('/user/', rejectUnauthenticated, (req, res) => {
     res.send(result.rows)
   }).catch((err) => console.log(err));
 });
+// starts the game from hitting the start game button
+router.put('/start/:gameId', rejectUnauthenticated, (req, res) => {
+  const sql = `update games set status = 'inprogress' where id = $1;
+  update rounds set round_number = round_number + 1 where game_id = $1;`;
+  const gameId = req.params.gameId;
+
+  pool.query(sql, [gameId]).then((result) => {
+    res.sendStatus(200);
+  }).catch((error) => console.log(error));
+});
 
 /**
  * POST route template
@@ -50,12 +59,57 @@ router.get('/user/', rejectUnauthenticated, (req, res) => {
 // this is called every time roll or save score is pressed and it will check to see which option the player would like to use
 router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   // POST route code here
-  const sql = ``;
   const gameData = req.body;
-  if (gameData.button === 'roll') {
+  let newGameData = gameData;
+  if (gameData.status !== 'inprogess') {
+    res.send({ error: 'game is not in progress' }).status(400);
+  } else {
+    if (gameData.button === 'roll') {
+      if (gameData.farkle !== true || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
+        res.sendStatus(400)
+      } else {
+        const sql = `update rounds_players set d1_val=$1, d2_val=$2, d3_val=$3, d4_val=$4, d5_val=$5, d6_val=$6, rolls=$7 where game_id + $8`;
+        newGameData.d1_val = rollDice();
+        newGameData.d2_val = rollDice();
+        newGameData.d3_val = rollDice();
+        newGameData.d4_val = rollDice();
+        newGameData.d5_val = rollDice();
+        newGameData.d6_val = rollDice();
+        newGameData.rolls += 1;
+        pool.query(sql, [
+          newGameData.d1_val,
+          newGameData.d2_val,
+          newGameData.d3_val,
+          newGameData.d4_val,
+          newGameData.d5_val,
+          newGameData.d6_val,
+          newGameData.rolls,
+          req.params.gameId
+        ]).then((results) => {
+          res.sendStatus(200);
+        }).catch((error) => console.log(error));
+      }
+    } else if (gameData.button === 'save') {
+      if (gameData.farkle !== true || gameData.rolls !== 0 || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
+        res.sendStatus(400)
+      } else {
+        const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
+        const diceValues = [
+          { value: gameData.d1_val, locked: gameData.d1_locked },
+          { value: gameData.d2_val, locked: gameData.d2_locked },
+          { value: gameData.d3_val, locked: gameData.d3_locked },
+          { value: gameData.d4_val, locked: gameData.d4_locked },
+          { value: gameData.d5_val, locked: gameData.d5_locked },
+          { value: gameData.d6_val, locked: gameData.d6_locked },
+        ]
+        newGameData.has_played = true;
+        newGameData.current_score = gameData.current_score + checkMelds(diceValues)
+        pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
+          res.sendStatus(200)
+        }).catch((error) => console.log(error));
 
-  } else if (gameData.button === 'save') {
-
+      }
+    }
   }
 });
 
@@ -72,7 +126,7 @@ router.post('/lock', rejectUnauthenticated, (req, res) => {
 // returns 3000 as it should - const diceValues = [{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},];
 // returns 150 as it should - const diceValues = [{value: 1, locked: true},{value: 5, locked: true},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},];
 // returns 1500 as it should - const diceValues = [{value: 1, locked: true},{value: 2, locked: true},{value: 3, locked: true},{value: 4, locked: true},{value: 5, locked: true},{value: 6, locked: true},];
-// returns 450 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
+//const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
 // returns 1500 as it should - const diceValues = [{ value: 2, locked: true }, { value: 2, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true },];
 // returns 1150 as it should - const diceValues = [{ value: 1, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 5, locked: true },];
 // returns 500 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 1, locked: true }, { value: 5, locked: true }, { value: 5, locked: true },];
@@ -253,6 +307,10 @@ function applyThreeScore(index, tempScore, currentDice) {
   }
   return tempScore;
   // do i need to return tempscore then set tempscore = to this function? or by calling it as an input does that apply the score?
+}
+
+function rollDice() {
+  return Math.floor(Math.random() * 7);
 }
 
 module.exports = router;

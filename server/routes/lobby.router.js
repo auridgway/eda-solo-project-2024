@@ -8,7 +8,7 @@ const router = express.Router();
  */
 router.get('/', rejectUnauthenticated, (req, res) => {
     // GET route code here
-
+    
 });
 
 /**
