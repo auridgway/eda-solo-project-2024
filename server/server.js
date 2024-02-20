@@ -26,6 +26,7 @@ app.use(passport.session());
 // Routes
 app.use('/api/user', userRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/lobby', gameRouter);
 
 
 // Listen Server & Port

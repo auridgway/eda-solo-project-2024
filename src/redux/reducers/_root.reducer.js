@@ -2,9 +2,6 @@ import { combineReducers } from 'redux';
 import errors from './errors.reducer';
 import user from './user.reducer';
 import games from './games.reducer';
-import players from './players.reducer';
-import turns from './turns.reducer';
-import rounds from './rounds.reducer';
 import diceInfo from './diceInfo.reducer'
 
 // rootReducer is the primary reducer for our entire project
@@ -17,9 +14,6 @@ const rootReducer = combineReducers({
   errors, // contains registrationMessage and loginMessage
   user, // will have an id and username if someone is logged in
   games,
-  players,
-  turns,
-  rounds,
   diceInfo,
 });
 

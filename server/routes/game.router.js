@@ -22,14 +22,23 @@ const router = express.Router();
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user', (req, res) => {
+router.get('/user/', (req, res) => {
   // GET route code here
-  const sql = `select * from games
+  const sql = `select games.id, games.time as "created_at", games.winner_id, games.status, games.owner_id, players.user_id as 
+  user_in_game, players.user_resigned, games.lobby_name, games.passphrase, rounds.id as round_id, rounds.round_number, 
+  rounds_players.player_id as current_player, rounds_players.current_score, rounds_players.has_played, rounds_players.rolls, 
+  rounds_players.farkle, rounds_players.d1_locked, rounds_players.d1_val, rounds_players.d2_locked, rounds_players.d2_val, 
+  rounds_players.d3_locked, rounds_players.d3_val, rounds_players.d4_locked, rounds_players.d4_val, rounds_players.d5_locked, 
+  rounds_players.d5_val, rounds_players.d6_locked, rounds_players.d6_val  from games
   join players on players.game_id = games.id
-  join rounds on rounds.game_id = games.id where user_id = 1;`
-  //const id = req.params.id
+  join rounds on rounds.game_id = games.id
+  join rounds_players on player_id=players.id;`
+  // use this in future to add id
+  // where user_id = 1
+  // const id = req.params.id
 
   pool.query(sql).then((result) => {
+    console.log(checkMelds(diceValues));
     res.send(result.rows)
   }).catch((err) => console.log(err));
 });
@@ -37,62 +46,54 @@ router.get('/user', (req, res) => {
 /**
  * POST route template
  */
-router.post('/turn/:turnNumber', (req, res) => {
+// this is called when people click the save score button
+router.post('/turn/:gameId', (req, res) => {
   // POST route code here
 
 
 });
 
+router.post('/lock', (req, res) => {
+  // POST route code here
+  // req.body NEEDS to be in this format [{values: x, locked: x}, ...] just send all dice when you send this request
+  const diceValues = req.body;
+
+  // 0 means no scoring and anything else means your dice scored
+  res.send({score:checkMelds(diceValues),dice:diceValues});
+
+});
+// test data for melds
+// returns 3000 as it should - const diceValues = [{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},];
+// returns 150 as it should - const diceValues = [{value: 1, locked: true},{value: 5, locked: true},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},];
+// returns 1500 as it should - const diceValues = [{value: 1, locked: true},{value: 2, locked: true},{value: 3, locked: true},{value: 4, locked: true},{value: 5, locked: true},{value: 6, locked: true},];
+// returns 450 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
+// returns 1500 as it should - const diceValues = [{ value: 2, locked: true }, { value: 2, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true },];
+// returns 1150 as it should - const diceValues = [{ value: 1, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 5, locked: true },];
+// returns 500 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 1, locked: true }, { value: 5, locked: true }, { value: 5, locked: true },];
+
 function checkMelds(diceValues) {
+  // dicevalues [{value, locked}...]
   // grabs the locked dice and filters them by values 1-6
-  const currentDice = diceValues.filter((dice) => dice.locked === true).sort();
+  let currentDice = diceValues.filter((dice) => dice.locked === true).sort((a, b) => {
+    if (a.value < b.value) {
+      return -1;
+    } else if (a.value > b.value) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+  let tempScore = 0;
   // checks to see if we only have one current dice. if so we see if it equals 1 or 5 then return their meld values
-  //ONE LOCKED DICE
-  if (currentDice.length === 1) {
-    if (currentDice[0].value === 1) {
-      return 100;
-    } else if (currentDice[0].value === 5) {
-      return 50;
-    } else {
-      return 'No Melds';
-    }
-    //TWO LOCKED DICE
-  } else if (currentDice.length === 2) {
-    let tempScore = 0;
-    for (const dice of currentDice) {
-      if (dice.value === 1) {
-        tempScore += 100;
-      } else if (dice.value === 5) {
-        tempScore += 50;
-      }
-    }
-    if (tempScore === 0) {
-      return 'No Melds'
-    } else {
-      return tempScore;
-    }
-    //THREE LOCKED DICE
-  } else if (currentDice.length === 3) {
-    if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
-      applyThreeScore(0, tempScore, currentDice);
-    } else {
-      let tempScore = 0;
-      for (const dice of currentDice) {
-        if (dice.value === 1) {
-          tempScore += 100;
-        } else if (dice.value === 5) {
-          tempScore += 50;
-        }
-      }
-      if (tempScore === 0) {
-        return 'No Melds'
-      } else {
-        return tempScore;
-      }
+  //ONE LOCKED DICE - will flow to bottom to be taken care of
+  //TWO LOCKED DICE - will flow to bottom to be taken care of
+  //THREE LOCKED DICE
+  if (currentDice.length === 3) {
+    if ((currentDice[0].value === currentDice[1].value) && (currentDice[1].value === currentDice[2].value)) {
+      return applyThreeScore(0, tempScore, currentDice);
     }
     //FOUR LOCKED DICE
   } else if (currentDice.length === 4) {
-    let tempScore = 0;
     // 4 of any number
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       return 1000;
@@ -101,7 +102,7 @@ function checkMelds(diceValues) {
       return 1500;
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
-      applyThreeScore(1, tempScore, currentDice);
+      tempScore += applyThreeScore(1, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we shift the first three items since they all match eachother
       // will this break the bottom if statement because it will have some things that are undefined?
       for (let i = 0; i < 3; i++) {
@@ -109,29 +110,15 @@ function checkMelds(diceValues) {
       }
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
-      applyThreeScore(1, tempScore, currentDice);
+      tempScore += applyThreeScore(1, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we pop the last three items since they all match eachother
       for (let i = 0; i < 3; i++) {
         currentDice.pop();
-      }
-    } else {
-      for (const dice of currentDice) {
-        if (dice.value === 1) {
-          tempScore += 100;
-        } else if (dice.value === 5) {
-          tempScore += 50;
-        }
-      }
-      if (tempScore === 0) {
-        return 'No Melds'
-      } else {
-        return tempScore;
       }
     }
   }
   //FIVE LOCKED DICE
   else if (currentDice.length === 5) {
-    let tempScore = 0;
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
       return 2000;
       // 4 of any number
@@ -142,7 +129,7 @@ function checkMelds(diceValues) {
       tempScore += 1500;
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
-      applyThreeScore(0, tempScore, currentDice);
+      tempScore += applyThreeScore(0, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we shift the first three items since they all match eachother
       // will this break the bottom if statement because it will have some things that are undefined?
       for (let i = 0; i < 3; i++) {
@@ -150,36 +137,22 @@ function checkMelds(diceValues) {
       }
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice.length > 3 && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
-      applyThreeScore(1, tempScore, currentDice);
+      tempScore += applyThreeScore(1, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we pop the last three items since they all match eachother
       for (let i = 0; i < 3; i++) {
         currentDice.pop();
       }
       // this checks for a middle three pair match
     } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
-      applyThreeScore(2, tempScore, currentDice);
+      tempScore += applyThreeScore(2, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we grab the first and last items since the middle match eachother
       currentDice = currentDice.slice(0, 1).concat(currentDice.slice(4, 5));
-
-    } else {
-      for (const dice of currentDice) {
-        if (dice.value === 1) {
-          tempScore += 100;
-        } else if (dice.value === 5) {
-          tempScore += 50;
-        }
-      }
-      if (tempScore === 0) {
-        return 'No Melds'
-      } else {
-        return tempScore;
-      }
     }
-
     //SIX LOCKED DICE
   } else if (currentDice.length === 6) {
-    let tempScore = 0;
     // 6 in a row
+    console.log('inside outside statement', checkForXInRow(currentDice, 4).isPresent)
+
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5].value) {
       return 3000;
       // a straight 1-6
@@ -197,17 +170,18 @@ function checkMelds(diceValues) {
     } else if (checkForXInRow(currentDice, 5).isPresent) {
       let endingIndex = checkForXInRow(currentDice, 5).endingIndex
       if (endingIndex === 4) {
-        currentDice = currentDice.slice(4, 5);
+        currentDice = currentDice.slice(5, 6);
       } else if (endingIndex === 5) {
         currentDice = currentDice.slice(0, 1);
       }
       tempScore += 2000;
     } else if (currentDice.length > 1 && checkForXInRow(currentDice, 4).isPresent) {
+      console.log('inside if statement', checkForXInRow(currentDice, 4).endingIndex)
       let endingIndex = checkForXInRow(currentDice, 4).endingIndex
       if (endingIndex === 3) {
-        currentDice = currentDice.slice(3, 5);
+        currentDice = currentDice.slice(4, 6);
       } else if (endingIndex === 4) {
-        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(4, 5));
+        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(5, 6));
       } else if (endingIndex === 5) {
         currentDice = currentDice.slice(0, 2);
       }
@@ -215,35 +189,29 @@ function checkMelds(diceValues) {
     } else if (currentDice.length > 2 && checkForXInRow(currentDice, 3).isPresent) {
       let endingIndex = checkForXInRow(currentDice, 3).endingIndex
       if (endingIndex === 2) {
-        applyThreeScore(2, tempScore, currentDice);
-        currentDice = currentDice.slice(2, 5);
+        tempScore += applyThreeScore(2, tempScore, currentDice);
+        currentDice = currentDice.slice(3, 6);
       } else if (endingIndex === 3) {
-        applyThreeScore(3, tempScore, currentDice);
-        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(3, 5));
+        tempScore += applyThreeScore(3, tempScore, currentDice);
+        currentDice = currentDice.slice(0, 1).concat(currentDice.slice(3, 6));
       } else if (endingIndex === 4) {
-        applyThreeScore(4, tempScore, currentDice);
-        currentDice = currentDice.slice(0, 2).concat(currentDice.slice(4, 5));
+        tempScore += applyThreeScore(4, tempScore, currentDice);
+        currentDice = currentDice.slice(0, 2).concat(currentDice.slice(4, 6));
       } else if (endingIndex === 5) {
-        applyThreeScore(5, tempScore, currentDice);
+        tempScore += applyThreeScore(5, tempScore, currentDice);
         currentDice = currentDice.slice(0, 3);
       }
-
       // checks to see if we have four in a row and trims the array for scoring accordingly
-    } else {
-      for (const dice of currentDice) {
-        if (dice.value === 1) {
-          tempScore += 100;
-        } else if (dice.value === 5) {
-          tempScore += 50;
-        }
-      }
-      if (tempScore === 0) {
-        return 'No Melds'
-      } else {
-        return tempScore;
-      }
     }
   }
+  for (const dice of currentDice) {
+    if (dice.value === 1) {
+      tempScore += 100;
+    } else if (dice.value === 5) {
+      tempScore += 50;
+    }
+  }
+  return tempScore;
 }
 // this function checks for x dice in a row out of 6 dice
 
@@ -251,8 +219,8 @@ function checkForXInRow(dice, amount) {
   let last = null;
   let count = 0;
   for (let i = 0; i < dice.length; i++) {
-    if (dice[i] != last) {
-      last = dice[i];
+    if (dice[i].value != last) {
+      last = dice[i].value;
       count = 0;
     }
     count += 1;
@@ -277,6 +245,7 @@ function applyThreeScore(index, tempScore, currentDice) {
   } else if (currentDice[index].value === 6) {
     tempScore += 600;
   }
+  return tempScore;
   // do i need to return tempscore then set tempscore = to this function? or by calling it as an input does that apply the score?
 }
 
