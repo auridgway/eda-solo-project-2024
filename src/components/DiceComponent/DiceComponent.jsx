@@ -24,10 +24,14 @@ export default function DiceComponent(props) {
             dispatch(action);
         }
     }
-
+    // allow users to send off bad melds and let the server respond with if it's good or bad
+    // let server check for all melds at start
+    // let server check for farkles
     return (
         <>
             {diceInfo.map((item, i) => <div key={i}><p onClick={() => handleClick(i, item.value, item.locked)}>{item.locked === false ? '🔓' : '🔒'}</p><p>{item.value}</p>{console.log(i)}</div>)}
+            <button>Roll</button>
+            <button>Save Score</button>
         </>
     )
 }
