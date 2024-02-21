@@ -3,15 +3,21 @@ import { useDispatch, useSelector } from "react-redux";
 
 
 export default function DiceComponent(props) {
-    const diceInfo = useSelector(store => store.diceInfo);
+    const diceInfo = [
+        {value:props.game[0].d1_val,locked:props.game[0].d1_locked},
+        {value:props.game[0].d2_val,locked:props.game[0].d2_locked},
+        {value:props.game[0].d3_val,locked:props.game[0].d3_locked},
+        {value:props.game[0].d4_val,locked:props.game[0].d4_locked},
+        {value:props.game[0].d5_val,locked:props.game[0].d5_locked},
+        {value:props.game[0].d6_val,locked:props.game[0].d6_locked},
+    ];
     const dispatch = useDispatch();
 
     function handleClick(key, payload, isLocked) {
-        console.log(key);
         if (isLocked) {
             const action = {
                 type: 'UNLOCK_DICE',
-                payload: { diceNumber: key, diceValue: payload }
+                payload: { diceNumber: key, diceValue: payload, isLocked:!isLocked }
                 
             }
             dispatch(action);
@@ -19,7 +25,7 @@ export default function DiceComponent(props) {
         } else {
             const action = {
                 type: 'LOCK_DICE',
-                payload: { diceNumber: key, diceValue: payload }
+                payload: { diceNumber: key, diceValue: payload, isLocked:!isLocked }
             }
             dispatch(action);
         }
@@ -30,8 +36,6 @@ export default function DiceComponent(props) {
     return (
         <>
             {diceInfo.map((item, i) => <div key={i}><p onClick={() => handleClick(i, item.value, item.locked)}>{item.locked === false ? '🔓' : '🔒'}</p><p>{item.value}</p>{console.log(i)}</div>)}
-            <button>Roll</button>
-            <button>Save Score</button>
         </>
     )
 }

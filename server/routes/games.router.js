@@ -21,24 +21,21 @@ const router = express.Router();
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user/', (req, res) => {
+router.get('/user', (req, res) => {
   // GET route code here
-  const sql = `select games.id, games.time as "created_at", games.winner_id, games.status, games.owner_id, 
-  players.user_id as user_in_game, (SELECT count(*) from "players" where "game_id"="games"."id") as num_players, 
-  players.user_resigned, games.lobby_name, games.passphrase, rounds.id as round_id, rounds.round_number, 
-  rounds_players.player_id as current_player, rounds_players.current_score, rounds_players.has_played, rounds_players.rolls, 
-  rounds_players.farkle, rounds_players.d1_locked, rounds_players.d1_val, rounds_players.d2_locked, rounds_players.d2_val, 
-  rounds_players.d3_locked, rounds_players.d3_val, rounds_players.d4_locked, rounds_players.d4_val, rounds_players.d5_locked, 
-  rounds_players.d5_val, rounds_players.d6_locked, rounds_players.d6_val from games
+  const sql = `select games.*, jsonb_agg("rounds") as "rounds", jsonb_agg("rounds_players") as "player_rounds", jsonb_agg("players") as players from games
   join players on players.game_id = games.id
   join rounds on rounds.game_id = games.id
-  join rounds_players on player_id=players.id;`
+  join rounds_players on player_id=players.id
+  group by "games"."id";`
+  // dont we need to only grab games to show and join games? then from there when we post a turn we can grab just the
+  // turns on that game? it seems like if we don't then we will only ever have one line appear for the game and how can we
+  // be sure that we always get the most recent turn?
   // use this in future to add id
   // where user_id = 1
   // const id = req.params.id
 
   pool.query(sql).then((result) => {
-    console.log(checkMelds(diceValues));
     res.send(result.rows)
   }).catch((err) => console.log(err));
 });
@@ -61,53 +58,98 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   // POST route code here
   const gameData = req.body;
   let newGameData = gameData;
+  let playerInfo = {};
+
   if (gameData.status !== 'inprogess') {
     res.send({ error: 'game is not in progress' }).status(400);
   } else {
-    if (gameData.button === 'roll') {
-      if (gameData.farkle !== true || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
-        res.sendStatus(400)
-      } else {
-        const sql = `update rounds_players set d1_val=$1, d2_val=$2, d3_val=$3, d4_val=$4, d5_val=$5, d6_val=$6, rolls=$7 where game_id + $8`;
-        newGameData.d1_val = rollDice();
-        newGameData.d2_val = rollDice();
-        newGameData.d3_val = rollDice();
-        newGameData.d4_val = rollDice();
-        newGameData.d5_val = rollDice();
-        newGameData.d6_val = rollDice();
-        newGameData.rolls += 1;
-        pool.query(sql, [
-          newGameData.d1_val,
-          newGameData.d2_val,
-          newGameData.d3_val,
-          newGameData.d4_val,
-          newGameData.d5_val,
-          newGameData.d6_val,
-          newGameData.rolls,
-          req.params.gameId
-        ]).then((results) => {
-          res.sendStatus(200);
-        }).catch((error) => console.log(error));
-      }
-    } else if (gameData.button === 'save') {
-      if (gameData.farkle !== true || gameData.rolls !== 0 || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
-        res.sendStatus(400)
-      } else {
-        const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
-        const diceValues = [
-          { value: gameData.d1_val, locked: gameData.d1_locked },
-          { value: gameData.d2_val, locked: gameData.d2_locked },
-          { value: gameData.d3_val, locked: gameData.d3_locked },
-          { value: gameData.d4_val, locked: gameData.d4_locked },
-          { value: gameData.d5_val, locked: gameData.d5_locked },
-          { value: gameData.d6_val, locked: gameData.d6_locked },
-        ]
-        newGameData.has_played = true;
-        newGameData.current_score = gameData.current_score + checkMelds(diceValues)
-        pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
-          res.sendStatus(200)
-        }).catch((error) => console.log(error));
+    // trying to grab player info to see if all players have played?
+    const getPlayers = `select * from "players" where game_id=$1 order by joined_at asc;`;
+    // get our current player information
+    pool.query(getPlayers, [req.params.gameId]).then((result) => {
+      playerInfo = result.rows;
+    }).catch((error) => console.log(error));
 
+    
+
+    if (playerInfo === undefined) {
+      console.error('Players info not found.')
+    } else {
+      if (gameData.button === 'roll') {
+        if (gameData.farkle !== true || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
+          res.sendStatus(400)
+        } else {
+          // this rolls the dice if they arent locked - need to see if the dice has been accounted for as well in our
+          // dicevalue check below
+          const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played")
+          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
+          if (!newGameData.d1_locked) {
+            newGameData.d1_val = rollDice();
+          }
+          if (!newGameData.d2_locked) {
+            newGameData.d2_val = rollDice();
+          }
+          if (!newGameData.d3_locked) {
+            newGameData.d3_val = rollDice();
+          }
+          if (!newGameData.d4_locked) {
+            newGameData.d4_val = rollDice();
+          }
+          if (!newGameData.d5_locked) {
+            newGameData.d5_val = rollDice();
+          }
+          if (!newGameData.d6_locked) {
+            newGameData.d6_val = rollDice();
+          }
+          const diceValues = [
+            { value: newGameData.d1_val, locked: newGameData.d1_locked },
+            { value: newGameData.d2_val, locked: newGameData.d2_locked },
+            { value: newGameData.d3_val, locked: newGameData.d3_locked },
+            { value: newGameData.d4_val, locked: newGameData.d4_locked },
+            { value: newGameData.d5_val, locked: newGameData.d5_locked },
+            { value: newGameData.d6_val, locked: newGameData.d6_locked },
+          ]
+          // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
+          if (checkMelds(diceValues) === 0) {
+            newGameData.farkle = true;
+            res.send('Farkle').status(400)
+          } else {
+            newGameData.rolls += 1;
+            pool.query(sql, [
+            newGameData.round_id, newGameData.player_id,
+            newGameData.d1_val,newGameData.d1_locked,
+            newGameData.d2_val,newGameData.d2_locked,
+            newGameData.d3_val,newGameData.d3_locked,
+            newGameData.d4_val,newGameData.d4_locked,
+            newGameData.d5_val,newGameData.d5_locked,
+            newGameData.d6_val,newGameData.d6_locked,
+            newGameData.current_score, newGameData.rolls,
+            newGameData.farkle, newGameData.has_played
+            ]).then((results) => {
+              res.sendStatus(200);
+            }).catch((error) => console.log(error));
+          }
+        }
+      } else if (gameData.button === 'save') {
+        if (gameData.farkle !== true || gameData.rolls !== 0 || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
+          res.sendStatus(400)
+        } else {
+          const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
+          const diceValues = [
+            { value: newGameData.d1_val, locked: newGameData.d1_locked },
+            { value: newGameData.d2_val, locked: newGameData.d2_locked },
+            { value: newGameData.d3_val, locked: newGameData.d3_locked },
+            { value: newGameData.d4_val, locked: newGameData.d4_locked },
+            { value: newGameData.d5_val, locked: newGameData.d5_locked },
+            { value: newGameData.d6_val, locked: newGameData.d6_locked },
+          ]
+          newGameData.has_played = true;
+          newGameData.current_score = gameData.current_score + checkMelds(diceValues)
+          pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
+            res.sendStatus(200)
+          }).catch((error) => console.log(error));
+
+        }
       }
     }
   }

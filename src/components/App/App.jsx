@@ -65,7 +65,7 @@ function App() {
           <ProtectedRoute
             // This will show logged in user the gameplayscreen
             exact
-            path="/game"
+            path="/game/:gameid"
           >
             <GameplayScreen />
           </ProtectedRoute>

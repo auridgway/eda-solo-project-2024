@@ -26,7 +26,7 @@ function Nav() {
           <>
               <pre>Welcome, {user.username}!</pre>
               <pre>Your ID is: {user.id}</pre>
-            <Link className="navLink" to="/user">
+            <Link className="navLink" to="/dashboard">
               Home
             </Link>
 

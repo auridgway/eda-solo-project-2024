@@ -22,7 +22,6 @@ router.post('/', rejectUnauthenticated, (req, res) => {
     pool.query(sql, [req.user.id, joinData.game_id]).then((results) => {
         res.sendStatus(200);
     }).catch((error) => console.log(error));
-
 });
 
 module.exports = router;

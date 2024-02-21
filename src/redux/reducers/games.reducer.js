@@ -1,5 +1,7 @@
-const gamesReducer = (state = {}, action) => {
+const gamesReducer = (state = [], action) => {
     switch (action.type) {
+      case 'SET_GAME':
+        return action.payload;
       default:
         return state;
     }
