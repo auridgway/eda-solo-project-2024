@@ -29,7 +29,7 @@ export default function DashboardScreen() {
             {games?.map((item, i) =>
                 <div key={i}>
                     <h3>{item.lobby_name}</h3>
-                    <p>{item.num_players}/8</p>
+                    <p>{item.players.length}/8</p>
                     <p>Current game status:{item.status}</p>
                     <button data-gameid={item.id} onClick={handleResume}>Resume Game</button>
                     <button onClick={handleResign}>Resign Game</button>

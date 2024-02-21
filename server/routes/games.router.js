@@ -40,14 +40,22 @@ router.get('/user', (req, res) => {
   }).catch((err) => console.log(err));
 });
 // starts the game from hitting the start game button
-router.put('/start/:gameId', rejectUnauthenticated, (req, res) => {
-  const sql = `update games set status = 'inprogress' where id = $1;
-  update rounds set round_number = round_number + 1 where game_id = $1;`;
-  const gameId = req.params.gameId;
+router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
+  const sql = `update games set status = 'inprogress' where id = $1;`;
+  const sql2 = `insert into rounds ("round_number","game_id")
+  values(
+    (SELECT "round_number"+1 FROM "rounds" WHERE "game_id"=$1 ORDER BY "round_number" DESC LIMIT 1)
+    ,$1);`
 
-  pool.query(sql, [gameId]).then((result) => {
+  const gameId = req.params.gameId;
+  try {
+    await pool.query(sql, [gameId]);
+    await pool.query(sql2, [gameId]);
     res.sendStatus(200);
-  }).catch((error) => console.log(error));
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
 });
 
 /**
@@ -58,7 +66,7 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   // POST route code here
   const gameData = req.body;
   let newGameData = gameData;
-  let playerInfo = {};
+  let playerInfo = [];
 
   if (gameData.status !== 'inprogess') {
     res.send({ error: 'game is not in progress' }).status(400);
@@ -70,8 +78,6 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
       playerInfo = result.rows;
     }).catch((error) => console.log(error));
 
-    
-
     if (playerInfo === undefined) {
       console.error('Players info not found.')
     } else {
@@ -81,50 +87,54 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
         } else {
           // this rolls the dice if they arent locked - need to see if the dice has been accounted for as well in our
           // dicevalue check below
-          const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played")
-          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`;
-          if (!newGameData.d1_locked) {
+          const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
+          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
+          if (!newGameData.d1_locked && !newGameData.d1_scored) {
             newGameData.d1_val = rollDice();
           }
-          if (!newGameData.d2_locked) {
+          if (!newGameData.d2_locked && !newGameData.d1_scored) {
             newGameData.d2_val = rollDice();
           }
-          if (!newGameData.d3_locked) {
+          if (!newGameData.d3_locked && !newGameData.d1_scored) {
             newGameData.d3_val = rollDice();
           }
-          if (!newGameData.d4_locked) {
+          if (!newGameData.d4_locked && !newGameData.d1_scored) {
             newGameData.d4_val = rollDice();
           }
-          if (!newGameData.d5_locked) {
+          if (!newGameData.d5_locked && !newGameData.d1_scored) {
             newGameData.d5_val = rollDice();
           }
-          if (!newGameData.d6_locked) {
+          if (!newGameData.d6_locked && !newGameData.d1_scored) {
             newGameData.d6_val = rollDice();
           }
           const diceValues = [
-            { value: newGameData.d1_val, locked: newGameData.d1_locked },
-            { value: newGameData.d2_val, locked: newGameData.d2_locked },
-            { value: newGameData.d3_val, locked: newGameData.d3_locked },
-            { value: newGameData.d4_val, locked: newGameData.d4_locked },
-            { value: newGameData.d5_val, locked: newGameData.d5_locked },
-            { value: newGameData.d6_val, locked: newGameData.d6_locked },
+            { value: newGameData.d1_val, locked: newGameData.d1_locked, scored: newGameData.d1_scored, },
+            { value: newGameData.d2_val, locked: newGameData.d2_locked, scored: newGameData.d2_scored, },
+            { value: newGameData.d3_val, locked: newGameData.d3_locked, scored: newGameData.d3_scored, },
+            { value: newGameData.d4_val, locked: newGameData.d4_locked, scored: newGameData.d4_scored, },
+            { value: newGameData.d5_val, locked: newGameData.d5_locked, scored: newGameData.d5_scored, },
+            { value: newGameData.d6_val, locked: newGameData.d6_locked, scored: newGameData.d6_scored, },
           ]
           // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
           if (checkMelds(diceValues) === 0) {
             newGameData.farkle = true;
+            
             res.send('Farkle').status(400)
           } else {
             newGameData.rolls += 1;
             pool.query(sql, [
-            newGameData.round_id, newGameData.player_id,
-            newGameData.d1_val,newGameData.d1_locked,
-            newGameData.d2_val,newGameData.d2_locked,
-            newGameData.d3_val,newGameData.d3_locked,
-            newGameData.d4_val,newGameData.d4_locked,
-            newGameData.d5_val,newGameData.d5_locked,
-            newGameData.d6_val,newGameData.d6_locked,
-            newGameData.current_score, newGameData.rolls,
-            newGameData.farkle, newGameData.has_played
+              newGameData.round_id, newGameData.player_id,
+              newGameData.d1_val, newGameData.d1_locked,
+              newGameData.d2_val, newGameData.d2_locked,
+              newGameData.d3_val, newGameData.d3_locked,
+              newGameData.d4_val, newGameData.d4_locked,
+              newGameData.d5_val, newGameData.d5_locked,
+              newGameData.d6_val, newGameData.d6_locked,
+              newGameData.current_score, newGameData.rolls,
+              newGameData.farkle, newGameData.has_played,
+              newGameData.d1_scored, newGameData.d2_scored,
+              newGameData.d3_scored, newGameData.d4_scored,
+              newGameData.d5_scored, newGameData.d6_scored,
             ]).then((results) => {
               res.sendStatus(200);
             }).catch((error) => console.log(error));
