@@ -23,15 +23,23 @@ const router = express.Router();
 // this will get the players active games when they are on the initial login dashboard screen
 router.get('/user', (req, res) => {
   // GET route code here
-  const sql = `select games.*, jsonb_agg("rounds") as "rounds", jsonb_agg("rounds_players") as "player_rounds", jsonb_agg("players") as players from games
-  join players on players.game_id = games.id
-  join rounds on rounds.game_id = games.id
-  join rounds_players on player_id=players.id
-  group by "games"."id";`
-  // dont we need to only grab games to show and join games? then from there when we post a turn we can grab just the
-  // turns on that game? it seems like if we don't then we will only ever have one line appear for the game and how can we
-  // be sure that we always get the most recent turn?
-  // use this in future to add id
+  // const sql = `select games.*, jsonb_agg("rounds") as "rounds", jsonb_agg("rounds_players") as "player_rounds", jsonb_agg("players") as players from games
+  // join players on players.game_id = games.id
+  // join rounds on rounds.game_id = games.id
+  // join rounds_players on rounds.id=rounds_players.round_id
+  // group by "games"."id";`
+  const sql = `
+  SELECT *,
+	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (
+		SELECT *, 
+			(SELECT coalesce(jsonb_agg(item2), '[]'::jsonb) FROM (
+				SELECT * FROM "rounds_players" WHERE "rounds_players"."round_id"="rounds"."id"
+			) item2) as "rounds_players"
+		FROM "rounds" WHERE "rounds"."game_id"="games"."id" ORDER BY "rounds"."round_number" DESC)
+		item) as "rounds",
+	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT * FROM "players" WHERE "players"."game_id"="games"."id") item) as "players"
+	from "games";`
+
   // where user_id = 1
   // const id = req.params.id
 
@@ -39,14 +47,18 @@ router.get('/user', (req, res) => {
     res.send(result.rows)
   }).catch((err) => console.log(err));
 });
+
 // starts the game from hitting the start game button
 router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
+  // set game to inprogress
   const sql = `update games set status = 'inprogress' where id = $1;`;
+  // add to our rounds
   const sql2 = `insert into rounds ("round_number","game_id")
   values(
     (SELECT "round_number"+1 FROM "rounds" WHERE "game_id"=$1 ORDER BY "round_number" DESC LIMIT 1)
-    ,$1);`
-
+    ,$1);`;
+  
+  const sql3 = ``;
   const gameId = req.params.gameId;
   try {
     await pool.query(sql, [gameId]);
