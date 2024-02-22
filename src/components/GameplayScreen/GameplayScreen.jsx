@@ -11,7 +11,7 @@ export default function GameplayScreen() {
     const games = useSelector(store => store.games)
     const users = useSelector(store => store.allUsers);
     const currentGame = (games?.filter((item) => item.id === Number(gameid)))
-    console.log(users.filter(user => user.id ===1)[0].username)
+    console.log(currentGame[0].rounds[0].rounds_players)
     // 
     function handleRoll() {
         if (currentGame[0].roundNumber === 0) {
@@ -35,7 +35,7 @@ export default function GameplayScreen() {
                     <div>
                         <div>
                             <p>current turn:{users.filter(user => user.id === item.players.filter((player)=>Number(player.user_id)===1)[0].user_id)[0].username}</p>
-                            <p>current score:{item.player_rounds.filter(round => round.player_id === item.players.filter((player)=>Number(player.id)===1)[0].id)[0].current_score}</p>
+                            <p>current score:{item.rounds[0].rounds_players.filter(round => round.player_id === item.players.filter((player)=>Number(player.id)===1)[0].id)[0].current_score}</p>
                             <DiceComponents gameData={item.rounds[0].rounds_players} />
                             {currentGame[0].roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
                             {currentGame[0].roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}
