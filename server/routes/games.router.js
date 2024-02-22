@@ -57,7 +57,7 @@ router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   values(
     (SELECT "round_number"+1 FROM "rounds" WHERE "game_id"=$1 ORDER BY "round_number" DESC LIMIT 1)
     ,$1);`;
-  
+
   const sql3 = ``;
   const gameId = req.params.gameId;
   try {
@@ -92,105 +92,97 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
 
     if (playerInfo === undefined) {
       console.error('Players info not found.')
-    } else {
-      if (gameData.button === 'roll') {
-        if (gameData.farkle !== true || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
-          res.sendStatus(400)
-        } else {
-          // this rolls the dice if they arent locked - need to see if the dice has been accounted for as well in our
-          // dicevalue check below
-          const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
-          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
-          if (!newGameData.d1_locked && !newGameData.d1_scored) {
-            newGameData.d1_val = rollDice();
-          }
-          if (!newGameData.d2_locked && !newGameData.d1_scored) {
-            newGameData.d2_val = rollDice();
-          }
-          if (!newGameData.d3_locked && !newGameData.d1_scored) {
-            newGameData.d3_val = rollDice();
-          }
-          if (!newGameData.d4_locked && !newGameData.d1_scored) {
-            newGameData.d4_val = rollDice();
-          }
-          if (!newGameData.d5_locked && !newGameData.d1_scored) {
-            newGameData.d5_val = rollDice();
-          }
-          if (!newGameData.d6_locked && !newGameData.d1_scored) {
-            newGameData.d6_val = rollDice();
-          }
-          const diceValues = [
-            { value: newGameData.d1_val, locked: newGameData.d1_locked, scored: newGameData.d1_scored, },
-            { value: newGameData.d2_val, locked: newGameData.d2_locked, scored: newGameData.d2_scored, },
-            { value: newGameData.d3_val, locked: newGameData.d3_locked, scored: newGameData.d3_scored, },
-            { value: newGameData.d4_val, locked: newGameData.d4_locked, scored: newGameData.d4_scored, },
-            { value: newGameData.d5_val, locked: newGameData.d5_locked, scored: newGameData.d5_scored, },
-            { value: newGameData.d6_val, locked: newGameData.d6_locked, scored: newGameData.d6_scored, },
-          ]
-          // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
-          if (checkMelds(diceValues) === 0) {
-            newGameData.farkle = true;
-            
-            res.send('Farkle').status(400)
-          } else {
-            newGameData.rolls += 1;
-            pool.query(sql, [
-              newGameData.round_id, newGameData.player_id,
-              newGameData.d1_val, newGameData.d1_locked,
-              newGameData.d2_val, newGameData.d2_locked,
-              newGameData.d3_val, newGameData.d3_locked,
-              newGameData.d4_val, newGameData.d4_locked,
-              newGameData.d5_val, newGameData.d5_locked,
-              newGameData.d6_val, newGameData.d6_locked,
-              newGameData.current_score, newGameData.rolls,
-              newGameData.farkle, newGameData.has_played,
-              newGameData.d1_scored, newGameData.d2_scored,
-              newGameData.d3_scored, newGameData.d4_scored,
-              newGameData.d5_scored, newGameData.d6_scored,
-            ]).then((results) => {
-              res.sendStatus(200);
-            }).catch((error) => console.log(error));
-          }
-        }
-      } else if (gameData.button === 'save') {
-        if (gameData.farkle !== true || gameData.rolls !== 0 || gameData.round_number === 0 || gameData.num_players < 1 || gameData.num_players > 8 || gameData.user_resigned === true || winner_id !== null) {
-          res.sendStatus(400)
-        } else {
-          const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
-          const diceValues = [
-            { value: newGameData.d1_val, locked: newGameData.d1_locked },
-            { value: newGameData.d2_val, locked: newGameData.d2_locked },
-            { value: newGameData.d3_val, locked: newGameData.d3_locked },
-            { value: newGameData.d4_val, locked: newGameData.d4_locked },
-            { value: newGameData.d5_val, locked: newGameData.d5_locked },
-            { value: newGameData.d6_val, locked: newGameData.d6_locked },
-          ]
-          newGameData.has_played = true;
-          newGameData.current_score = gameData.current_score + checkMelds(diceValues)
-          pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
-            res.sendStatus(200)
-          }).catch((error) => console.log(error));
-
-        }
-      }
     }
+
   }
 });
 
-router.post('/lock', rejectUnauthenticated, (req, res) => {
+router.post('/roll/:gameId', rejectUnauthenticated, (req, res) => {
+
+  const currentTurn = req.body;
+  let updatedTurn = currentTurn;
+  // expect to recieve an object like {id:2,round_id:2,player_id:2,d1_val, ... }
+
+  let diceValues = [
+    { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored, },
+    { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored, },
+    { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored, },
+    { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored, },
+    { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored, },
+    { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored, },
+  ]
+
+  const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
+  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
+
+  // roll our new dice and set the values accordingly
+  diceValues = randomizeDice(diceValues);
+
+  // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
+  if (checkMelds(diceValues) === 0) {
+    updatedTurn.farkle = true;
+    res.send('Farkle').status(400)
+  } else {
+    updatedTurn.current_score = checkMelds(diceValues);
+  }
+  updatedTurn.rolls += 1;
+  console.log(currentTurn);
+  console.log(currentTurn.rolls);
+  console.log(updatedTurn);
+  console.log(updatedTurn.rolls);
+  console.log(req.body);
+
+
+  pool.query(sql, [
+    updatedTurn.round_id, updatedTurn.player_id,
+    diceValues.d1_val, diceValues.d1_locked,
+    diceValues.d2_val, diceValues.d2_locked,
+    diceValues.d3_val, diceValues.d3_locked,
+    diceValues.d4_val, diceValues.d4_locked,
+    diceValues.d5_val, diceValues.d5_locked,
+    diceValues.d6_val, diceValues.d6_locked,
+    updatedTurn.current_score, updatedTurn.rolls,
+    updatedTurn.farkle, diceValues.has_played,
+    diceValues.d1_scored, diceValues.d2_scored,
+    diceValues.d3_scored, diceValues.d4_scored,
+    diceValues.d5_scored, diceValues.d6_scored,
+  ]).then((results) => {
+    res.sendStatus(200);
+  }).catch((error) => console.log(error));
+});
+
+router.put('/save/:gameId', rejectUnauthenticated, (req, res) => {
+  const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
+  const diceValues = [
+    { value: newGameData.d1_val, locked: newGameData.d1_locked },
+    { value: newGameData.d2_val, locked: newGameData.d2_locked },
+    { value: newGameData.d3_val, locked: newGameData.d3_locked },
+    { value: newGameData.d4_val, locked: newGameData.d4_locked },
+    { value: newGameData.d5_val, locked: newGameData.d5_locked },
+    { value: newGameData.d6_val, locked: newGameData.d6_locked },
+  ]
+  newGameData.has_played = true;
+  newGameData.current_score = gameData.current_score + checkMelds(diceValues)
+  pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
+    res.sendStatus(200)
+  }).catch((error) => console.log(error));
+});
+
+router.post('/lock/', rejectUnauthenticated, (req, res) => {
   // POST route code here
-  // req.body NEEDS to be in this format [{values: x, locked: x}, ...] just send all dice when you send this request
+  // req.body NEEDS to be in this format [{values: x, locked: x, scored: x}, ...] just send all dice when you send this request
   const diceValues = req.body;
 
   // 0 means no scoring and anything else means your dice scored - a zero score will reflect on the clients end
   res.send({ score: checkMelds(diceValues), dice: diceValues });
 
 });
+
 // test data for melds
 // returns 3000 as it should - const diceValues = [{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},];
 // returns 150 as it should - const diceValues = [{value: 1, locked: true},{value: 5, locked: true},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},];
 // returns 1500 as it should - const diceValues = [{value: 1, locked: true},{value: 2, locked: true},{value: 3, locked: true},{value: 4, locked: true},{value: 5, locked: true},{value: 6, locked: true},];
-//const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
+// const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
 // returns 1500 as it should - const diceValues = [{ value: 2, locked: true }, { value: 2, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true },];
 // returns 1150 as it should - const diceValues = [{ value: 1, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 5, locked: true },];
 // returns 500 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 1, locked: true }, { value: 5, locked: true }, { value: 5, locked: true },];
@@ -371,6 +363,28 @@ function applyThreeScore(index, tempScore, currentDice) {
   }
   return tempScore;
   // do i need to return tempscore then set tempscore = to this function? or by calling it as an input does that apply the score?
+}
+
+function randomizeDice(diceValues) {
+  if (!diceValues.d1_locked && !diceValues.d1_scored) {
+    diceValues.d1_val = rollDice();
+  }
+  if (!diceValues.d2_locked && !diceValues.d1_scored) {
+    diceValues.d2_val = rollDice();
+  }
+  if (!diceValues.d3_locked && !diceValues.d1_scored) {
+    diceValues.d3_val = rollDice();
+  }
+  if (!diceValues.d4_locked && !diceValues.d1_scored) {
+    diceValues.d4_val = rollDice();
+  }
+  if (!diceValues.d5_locked && !diceValues.d1_scored) {
+    diceValues.d5_val = rollDice();
+  }
+  if (!diceValues.d6_locked && !diceValues.d1_scored) {
+    diceValues.d6_val = rollDice();
+  }
+  return diceValues;
 }
 
 function rollDice() {
