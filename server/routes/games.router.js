@@ -37,7 +37,8 @@ router.get('/user', (req, res) => {
 			) item2) as "rounds_players"
 		FROM "rounds" WHERE "rounds"."game_id"="games"."id" ORDER BY "rounds"."round_number" DESC)
 		item) as "rounds",
-	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT * FROM "players" WHERE "players"."game_id"="games"."id") item) as "players"
+	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT "players".*, "user"."username" FROM "players" 
+JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
 	from "games";`
 
   // where user_id = 1
