@@ -29,7 +29,7 @@ export default function DiceComponent(props) {
             updateDiceState[key].locked = true;
             const action = {
                 type: 'ADJUST_DICE',
-                payload: updateDiceState
+                payload: {updateDiceState, currentGame}
             }
             setDiceInfo(updateDiceState);
             dispatch(action);
@@ -37,7 +37,7 @@ export default function DiceComponent(props) {
             updateDiceState[key].locked = false;
             const action = {
                 type: 'ADJUST_DICE',
-                payload: updateDiceState
+                payload: {updateDiceState, currentGame}
             }
             setDiceInfo(updateDiceState);
             dispatch(action);

@@ -11,6 +11,7 @@ export default function GameplayScreen() {
     const dispatch = useDispatch();
     const history = useHistory();
     const games = useSelector(store => store.games)
+    console.log(games)
     const currentGame = (games?.filter((item) => item.id === Number(gameid)))
     // 
     function handleRoll() {
