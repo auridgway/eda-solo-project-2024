@@ -8,11 +8,16 @@ function* fetchGamesSaga(action) {
 
 function* adjustDiceSaga(action) {
     const response = yield axios.post(`/api/games/lock/`, action.payload.updateDiceState);
-    yield put({ type: 'SET_LOCKED_DICE', payload: {response, currentGame: action.payload.currentGame} })
+    yield put({ type: 'SET_LOCKED_DICE', payload: { response, currentGame: action.payload.currentGame } })
 }
 
 function* rollDiceSaga(action) {
-    yield axios.post(`/api/games/roll/${action.payload.gameId}`, action.payload.gameState);
+    yield axios.post(`/api/games/roll/`, action.payload);
+    yield put({ type: 'FETCH_GAMES' });
+}
+
+function* saveScoreSaga(action) {
+    yield axios.post(`/api/games/save/${action.payload.gameId}`, action.payload.gameState);
     yield put({ type: 'FETCH_GAMES' });
 }
 
@@ -32,6 +37,7 @@ function* gamesSaga() {
     yield takeEvery('ROLL_DICE', rollDiceSaga)
     yield takeEvery('JOIN_GAME', joinGameSaga)
     yield takeEvery('CREATE_GAME', createGameSaga)
+    yield takeEvery('SAVE_SCORE', saveScoreSaga)
 }
 
 export default gamesSaga;

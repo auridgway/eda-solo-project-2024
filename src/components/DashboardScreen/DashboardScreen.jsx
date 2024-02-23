@@ -6,6 +6,8 @@ export default function DashboardScreen() {
     const history = useHistory();
     const dispatch = useDispatch();
     const games = useSelector(store => store.games)
+    const user = useSelector(store => store.user)
+    const usersGames = userGames();
 
     useEffect(() => {
         const action = { type: 'FETCH_GAMES' };
@@ -13,6 +15,18 @@ export default function DashboardScreen() {
         const action2 = { type: 'FETCH_ALL_USERS' };
         dispatch(action2);
     }, [])
+
+    function userGames(){
+        const tempArray=[];
+        for (const game of games){
+            for (const players of game.players){
+                if (players.id===user?.id){
+                    tempArray.push(game);
+                }
+            }
+        }
+        return tempArray;
+    }
 
     function handleResume(event) {
         history.push(`/game/${event.target.dataset.gameid}`);
@@ -25,7 +39,7 @@ export default function DashboardScreen() {
     return (
         <>
             <pre>in the dashboard</pre>
-            {games?.map((item, i) =>
+            {usersGames?.map((item, i) =>
                 <div key={i}>
                     <h3>{item.lobby_name}</h3>
                     <p>{item.players.length}/8</p>

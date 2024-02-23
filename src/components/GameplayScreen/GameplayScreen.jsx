@@ -18,7 +18,7 @@ export default function GameplayScreen() {
         if (currentGame[0].roundNumber === 0) {
             alert('invalid roll');
         } else {
-            const action = { type: 'ROLL_DICE', payload: { gameId: currentGame[0].id, gameState: currentGame[0].rounds[rounds.length - 1].rounds_players[rounds_players.length - 1] } }
+            const action = { type: 'ROLL_DICE', payload: currentGame[0] }
             dispatch(action);
         }
     }
@@ -26,7 +26,7 @@ export default function GameplayScreen() {
         if (currentGame[0].roundNumber === 0) {
             alert('invalid save');
         } else {
-            const action = { type: 'SAVE_SCORE', payload: currentGame[0].id }
+            const action = { type: 'SAVE_SCORE', payload: currentGame[0] }
             dispatch(action);
         }
     }

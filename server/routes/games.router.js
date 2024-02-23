@@ -3,31 +3,12 @@ const pool = require('../modules/pool');
 const { rejectUnauthenticated } = require('../modules/authentication-middleware');
 const router = express.Router();
 
-
-// Game Logic
-// people will attempt to join a game using a post to players - if there are more than 8 don't allow anymore people in the game
-// user will hit start game and send off a put to update the gamestate (if there is only one person, reject this request)
-// check if all players have played this turn. if so...
-// ...post to rounds to increment the round post to rounds_players to initalize first turn (since they start at 0)
-// roll 6 random numbers for current turn
-// let server check for all melds at start
-// let server check for farkles - if farkle send back farkle true/false
-// if they've scored off the first roll with all six send the info back, and ask them to roll again or save score
-// allow users to send off bad melds and let the server respond with if it's good or bad
-// check to see if current turn is saving their score then post the score accordingly and send back user info (reply with the same object we send to redux)
-// if they've farkled or saved their score then continue on to the next player and mark them as having their turn taken
-
 /**
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
 router.get('/user', (req, res) => {
-  // GET route code here
-  // const sql = `select games.*, jsonb_agg("rounds") as "rounds", jsonb_agg("rounds_players") as "player_rounds", jsonb_agg("players") as players from games
-  // join players on players.game_id = games.id
-  // join rounds on rounds.game_id = games.id
-  // join rounds_players on rounds.id=rounds_players.round_id
-  // group by "games"."id";`
+
   const sql = `
   SELECT *,
 	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (
@@ -41,8 +22,8 @@ router.get('/user', (req, res) => {
 JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
 	from "games";`
 
-  // where user_id = 1
-  // const id = req.params.id
+   
+  const id = req.user.id
 
   pool.query(sql).then((result) => {
     res.send(result.rows)
@@ -53,17 +34,10 @@ JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="game
 router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   // set game to inprogress
   const sql = `update games set status = 'inprogress' where id = $1;`;
-  // add to our rounds
-  const sql2 = `insert into rounds ("round_number","game_id")
-  values(
-    (SELECT "round_number"+1 FROM "rounds" WHERE "game_id"=$1 ORDER BY "round_number" DESC LIMIT 1)
-    ,$1);`;
 
-  const sql3 = ``;
   const gameId = req.params.gameId;
   try {
     await pool.query(sql, [gameId]);
-    await pool.query(sql2, [gameId]);
     res.sendStatus(200);
   } catch (err) {
     console.error(err);
@@ -71,12 +45,8 @@ router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   }
 });
 
-/**
- * POST route template
- */
-// this is called every time roll or save score is pressed and it will check to see which option the player would like to use
-router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
-  // POST route code here
+router.put('/turn/:gameId', rejectUnauthenticated, (req, res) => {
+  // put route code here
   const gameData = req.body;
   let newGameData = gameData;
   let playerInfo = [];
@@ -98,12 +68,13 @@ router.post('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   }
 });
 
-router.post('/roll/:gameId', rejectUnauthenticated, (req, res) => {
-
-  const currentTurn = req.body;
+router.post('/roll/', rejectUnauthenticated, (req, res) => {
+  console.log('in roll')
+  const currentGame = req.body;
+  const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
+  console.log(currentTurn);
   let updatedTurn = currentTurn;
   // expect to recieve an object like {id:2,round_id:2,player_id:2,d1_val, ... }
-
   let diceValues = [
     { value: updatedTurn.d1_val, locked: updatedTurn.d1_locked, scored: updatedTurn.d1_scored, },
     { value: updatedTurn.d2_val, locked: updatedTurn.d2_locked, scored: updatedTurn.d2_scored, },
@@ -113,8 +84,6 @@ router.post('/roll/:gameId', rejectUnauthenticated, (req, res) => {
     { value: updatedTurn.d6_val, locked: updatedTurn.d6_locked, scored: updatedTurn.d6_scored, },
   ]
 
-  const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
-  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
 
   // roll our new dice and set the values accordingly
   diceValues = randomizeDice(diceValues);
@@ -133,6 +102,8 @@ router.post('/roll/:gameId', rejectUnauthenticated, (req, res) => {
   console.log(updatedTurn.rolls);
   console.log(req.body);
 
+  const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
+  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
 
   pool.query(sql, [
     updatedTurn.round_id, updatedTurn.player_id,
