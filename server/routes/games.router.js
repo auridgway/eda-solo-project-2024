@@ -22,9 +22,6 @@ router.get('/user', (req, res) => {
 JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
 	from "games";`
 
-   
-  const id = req.user.id
-
   pool.query(sql).then((result) => {
     res.send(result.rows)
   }).catch((err) => console.log(err));
@@ -45,7 +42,8 @@ router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   }
 });
 
-router.put('/turn/:gameId', rejectUnauthenticated, (req, res) => {
+// sets a new turn
+router.post('/turn/', rejectUnauthenticated, (req, res) => {
   // put route code here
   const gameData = req.body;
   let newGameData = gameData;
@@ -68,62 +66,69 @@ router.put('/turn/:gameId', rejectUnauthenticated, (req, res) => {
   }
 });
 
+// rolls current turn
 router.post('/roll/', rejectUnauthenticated, (req, res) => {
   console.log('in roll')
   const currentGame = req.body;
   const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
   console.log(currentTurn);
   let updatedTurn = currentTurn;
-  // expect to recieve an object like {id:2,round_id:2,player_id:2,d1_val, ... }
-  let diceValues = [
-    { value: updatedTurn.d1_val, locked: updatedTurn.d1_locked, scored: updatedTurn.d1_scored, },
-    { value: updatedTurn.d2_val, locked: updatedTurn.d2_locked, scored: updatedTurn.d2_scored, },
-    { value: updatedTurn.d3_val, locked: updatedTurn.d3_locked, scored: updatedTurn.d3_scored, },
-    { value: updatedTurn.d4_val, locked: updatedTurn.d4_locked, scored: updatedTurn.d4_scored, },
-    { value: updatedTurn.d5_val, locked: updatedTurn.d5_locked, scored: updatedTurn.d5_scored, },
-    { value: updatedTurn.d6_val, locked: updatedTurn.d6_locked, scored: updatedTurn.d6_scored, },
-  ]
+
 
 
   // roll our new dice and set the values accordingly
-  diceValues = randomizeDice(diceValues);
+  let diceValues = randomizeDice(updatedTurn);
+  // diceValues = [
+  //   { value: updatedTurn.d1_val, locked: updatedTurn.d1_locked, scored: updatedTurn.d1_scored, },
+  //   { value: updatedTurn.d2_val, locked: updatedTurn.d2_locked, scored: updatedTurn.d2_scored, },
+  //   { value: updatedTurn.d3_val, locked: updatedTurn.d3_locked, scored: updatedTurn.d3_scored, },
+  //   { value: updatedTurn.d4_val, locked: updatedTurn.d4_locked, scored: updatedTurn.d4_scored, },
+  //   { value: updatedTurn.d5_val, locked: updatedTurn.d5_locked, scored: updatedTurn.d5_scored, },
+  //   { value: updatedTurn.d6_val, locked: updatedTurn.d6_locked, scored: updatedTurn.d6_scored, },
+  // ]
+  for (let i = 0; i < 6; i++) {
+    const propVal = `d${i + 1}_val`;
+    const propLocked = `d${i + 1}_locked`;
+    const propScored = `d${i + 1}_scored`;
 
+    updatedTurn[propVal] = diceValues[i].value;
+    updatedTurn[propLocked] = diceValues[i].locked;
+    updatedTurn[propScored] = diceValues[i].scored;
+  }
   // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
   if (checkMelds(diceValues) === 0) {
     updatedTurn.farkle = true;
-    res.send('Farkle').status(400)
+    updatedTurn.has_played = true
+    updatedTurn.current_score = 0;
   } else {
     updatedTurn.current_score = checkMelds(diceValues);
   }
   updatedTurn.rolls += 1;
-  console.log(currentTurn);
-  console.log(currentTurn.rolls);
-  console.log(updatedTurn);
-  console.log(updatedTurn.rolls);
-  console.log(req.body);
+
 
   const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
   values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
 
   pool.query(sql, [
     updatedTurn.round_id, updatedTurn.player_id,
-    diceValues.d1_val, diceValues.d1_locked,
-    diceValues.d2_val, diceValues.d2_locked,
-    diceValues.d3_val, diceValues.d3_locked,
-    diceValues.d4_val, diceValues.d4_locked,
-    diceValues.d5_val, diceValues.d5_locked,
-    diceValues.d6_val, diceValues.d6_locked,
+    updatedTurn.d1_val, updatedTurn.d1_locked,
+    updatedTurn.d2_val, updatedTurn.d2_locked,
+    updatedTurn.d3_val, updatedTurn.d3_locked,
+    updatedTurn.d4_val, updatedTurn.d4_locked,
+    updatedTurn.d5_val, updatedTurn.d5_locked,
+    updatedTurn.d6_val, updatedTurn.d6_locked,
     updatedTurn.current_score, updatedTurn.rolls,
-    updatedTurn.farkle, diceValues.has_played,
-    diceValues.d1_scored, diceValues.d2_scored,
-    diceValues.d3_scored, diceValues.d4_scored,
-    diceValues.d5_scored, diceValues.d6_scored,
+    updatedTurn.farkle, updatedTurn.has_played,
+    updatedTurn.d1_scored, updatedTurn.d2_scored,
+    updatedTurn.d3_scored, updatedTurn.d4_scored,
+    updatedTurn.d5_scored, updatedTurn.d6_scored,
   ]).then((results) => {
     res.sendStatus(200);
   }).catch((error) => console.log(error));
 });
 
-router.put('/save/:gameId', rejectUnauthenticated, (req, res) => {
+// saves score of players turn
+router.put('/save/', rejectUnauthenticated, (req, res) => {
   const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
   const diceValues = [
     { value: newGameData.d1_val, locked: newGameData.d1_locked },
@@ -338,8 +343,10 @@ function applyThreeScore(index, tempScore, currentDice) {
 }
 
 function randomizeDice(diceValues) {
+  let tempValues = diceValues
   if (!diceValues.d1_locked && !diceValues.d1_scored) {
-    diceValues.d1_val = rollDice();
+    diceValues.d1_val = Math.floor(Math.random() * 7);
+    console.log('randomized')
   }
   if (!diceValues.d2_locked && !diceValues.d1_scored) {
     diceValues.d2_val = rollDice();
@@ -356,11 +363,21 @@ function randomizeDice(diceValues) {
   if (!diceValues.d6_locked && !diceValues.d1_scored) {
     diceValues.d6_val = rollDice();
   }
-  return diceValues;
+
+  tempValues = [
+    { value: diceValues.d1_val, locked: diceValues.d1_locked, scored: diceValues.d1_scored, },
+    { value: diceValues.d2_val, locked: diceValues.d2_locked, scored: diceValues.d2_scored, },
+    { value: diceValues.d3_val, locked: diceValues.d3_locked, scored: diceValues.d3_scored, },
+    { value: diceValues.d4_val, locked: diceValues.d4_locked, scored: diceValues.d4_scored, },
+    { value: diceValues.d5_val, locked: diceValues.d5_locked, scored: diceValues.d5_scored, },
+    { value: diceValues.d6_val, locked: diceValues.d6_locked, scored: diceValues.d6_scored, },
+  ]
+
+  return tempValues;
 }
 
 function rollDice() {
-  return Math.floor(Math.random() * 7);
+  return Math.ceil(Math.random() * 5);
 }
 
 module.exports = router;

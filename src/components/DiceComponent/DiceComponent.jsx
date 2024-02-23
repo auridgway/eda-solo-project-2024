@@ -18,7 +18,7 @@ export default function DiceComponent(props) {
     
     useEffect(() => {
         setDiceInfo(updateDiceState);
-    }, [])
+    }, [games])
 
     const dispatch = useDispatch();
 
