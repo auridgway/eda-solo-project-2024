@@ -25,7 +25,6 @@ export default function DashboardScreen() {
     return (
         <>
             <pre>in the dashboard</pre>
-            <pre>{JSON.stringify(games)}</pre>
             {games?.map((item, i) =>
                 <div key={i}>
                     <h3>{item.lobby_name}</h3>
@@ -35,7 +34,6 @@ export default function DashboardScreen() {
                     <button onClick={handleResign}>Resign Game</button>
 
                 </div>)}
-            <button onClick={() => history.push('/game')}>push me to go to game</button>
         </>
     )
 }

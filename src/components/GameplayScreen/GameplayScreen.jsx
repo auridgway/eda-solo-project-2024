@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import DiceComponents from "../DiceComponent/DiceComponent"
-import { useParams } from "react-router-dom/cjs/react-router-dom.min"
+import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min"
 import axios from "axios"
 
 export default function GameplayScreen() {
@@ -9,6 +9,7 @@ export default function GameplayScreen() {
     // their values
     let { gameid } = useParams();
     const dispatch = useDispatch();
+    const history = useHistory();
     const games = useSelector(store => store.games)
     const users = useSelector(store => store.allUsers);
     const currentGame = (games?.filter((item) => item.id === Number(gameid)))
@@ -56,7 +57,7 @@ export default function GameplayScreen() {
                         </div>
                     </div>
                 </div>
-                <button>return to home</button>
+                <button onClick={()=>history.push('/home')}>return to home</button>
             </div>
         </div>
     )

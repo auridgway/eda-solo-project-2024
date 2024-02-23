@@ -18,7 +18,13 @@ function* rollDiceSaga(action) {
 }
 
 function* joinGameSaga(action) {
-    yield axios.post(`/api/lobby/`, action.payload);
+    yield axios.post(`/api/lobby/join`, action.payload);
+    yield put({ type: 'FETCH_GAMES' });
+}
+
+function* createGameSaga(action) {
+    yield axios.post(`/api/lobby/create`, action.payload);
+    yield put({ type: 'FETCH_GAMES' });
 }
 
 function* gamesSaga() {
@@ -26,6 +32,7 @@ function* gamesSaga() {
     yield takeEvery('ADJUST_DICE', adjustDiceSaga)
     yield takeEvery('ROLL_DICE', rollDiceSaga)
     yield takeEvery('JOIN_GAME', joinGameSaga)
+    yield takeEvery('CREATE_GAME', createGameSaga)
 }
 
 export default gamesSaga;
