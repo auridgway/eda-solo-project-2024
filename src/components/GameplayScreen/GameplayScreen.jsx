@@ -11,14 +11,13 @@ export default function GameplayScreen() {
     const dispatch = useDispatch();
     const history = useHistory();
     const games = useSelector(store => store.games)
-    const users = useSelector(store => store.allUsers);
     const currentGame = (games?.filter((item) => item.id === Number(gameid)))
     // 
     function handleRoll() {
         if (currentGame[0].roundNumber === 0) {
             alert('invalid roll');
         } else {
-            const action = { type: 'ROLL_DICE', payload: {gameId:currentGame[0].id,gameState:currentGame[0].rounds[rounds.length-1].rounds_players[rounds_players.length-1]}}
+            const action = { type: 'ROLL_DICE', payload: { gameId: currentGame[0].id, gameState: currentGame[0].rounds[rounds.length - 1].rounds_players[rounds_players.length - 1] } }
             dispatch(action);
         }
     }
@@ -37,7 +36,7 @@ export default function GameplayScreen() {
                 <div key={i}><p>{item.id}</p>
                     <div>
                         <div>
-                            <p>current turn:{users.filter(user => user.id === item.players.filter((player) => Number(player.user_id) === 1)[0].user_id)[0].username}</p>
+                            <p>current turn:{item.players.filter(players => players.user_id === item.rounds[0].rounds_players[item.rounds[0].rounds_players.length - 1].player_id)[0].username}</p>
                             <p>current score:{item.rounds[0].rounds_players.filter(round => round.player_id === item.players.filter((player) => Number(player.id) === 1)[0].id)[0].current_score}</p>
                             <DiceComponents gameId={gameid} />
                             {currentGame[0].roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
@@ -57,7 +56,7 @@ export default function GameplayScreen() {
                         </div>
                     </div>
                 </div>
-                <button onClick={()=>history.push('/home')}>return to home</button>
+                <button onClick={() => history.push('/home')}>return to home</button>
             </div>
         </div>
     )

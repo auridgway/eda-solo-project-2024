@@ -7,9 +7,8 @@ function* fetchGamesSaga(action) {
 }
 
 function* adjustDiceSaga(action) {
-    yield put({ type: 'SET_LOCKED_DICE', payload: action.payload })
-    yield axios.post(`/api/games/lock/`, action.payload);
-
+    const response = yield axios.post(`/api/games/lock/`, action.payload);
+    yield put({ type: 'SET_LOCKED_DICE', payload: response })
 }
 
 function* rollDiceSaga(action) {

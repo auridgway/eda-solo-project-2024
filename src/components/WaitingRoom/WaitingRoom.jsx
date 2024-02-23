@@ -10,8 +10,12 @@ export default function WaitingRoom() {
     const history = useHistory();
     const games = useSelector(store => store.games);
     const user = useSelector(store => store.user);
-    const users = useSelector(store => store.allUsers);
     const currentGame = (games?.filter((item) => item.id === Number(gameid)));
+
+    function handleStart() {
+        const action = {type: 'START_GAME'};
+        dispatch(action);
+    }
 
     return (
         <>
@@ -20,8 +24,8 @@ export default function WaitingRoom() {
                     <div key={i}>
                         <h3>Waiting for players ({game.players.length}/8)</h3>
                         {game.players.map((currentPlayer) => <p>{currentPlayer.username}</p>)}
-                        <button onClick={()=>history.push('/home')}>Return to Home</button>
-                        {user.id === game.owner_id ? <button>Start Game</button> : ''}
+                        <button onClick={() => history.push('/home')}>Return to Home</button>
+                        {user.id === game.owner_id ? <button onClick={handleStart}>Start Game</button> : ''}
                     </div>
                 )}
             </div>

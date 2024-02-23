@@ -5,26 +5,41 @@ import { useDispatch, useSelector } from "react-redux";
 export default function DiceComponent(props) {
     const games = useSelector(store => store.games)
     const currentGame = (games?.filter((item) => item.id === Number(props.gameId))[0])
-
-
-    const diceInfo = [
-        { value: currentGame.d1_val, locked: currentGame.d1_locked, scored: currentGame.d1_scored },
-        { value: currentGame.d2_val, locked: currentGame.d2_locked, scored: currentGame.d2_scored },
-        { value: currentGame.d3_val, locked: currentGame.d3_locked, scored: currentGame.d3_scored },
-        { value: currentGame.d4_val, locked: currentGame.d4_locked, scored: currentGame.d4_scored },
-        { value: currentGame.d5_val, locked: currentGame.d5_locked, scored: currentGame.d5_scored },
-        { value: currentGame.d6_val, locked: currentGame.d6_locked, scored: currentGame.d6_scored },
+    const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
+    const [diceInfo, setDiceInfo] = useState([]);
+    let updateDiceState = [
+        { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored },
+        { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored },
+        { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored },
+        { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored },
+        { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored },
+        { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored },
     ];
-    const [D1, setD1] = useState(diceInfo[1]);
+    
+    useEffect(() => {
+        setDiceInfo(updateDiceState);
+    }, [])
+
     const dispatch = useDispatch();
 
-    function handleClick(key, payload, isLocked) {
-        if (diceInfo[key].scored === false) {
-            diceInfo[key].locked = true;
+    // when this gets clicked we need to do these things
+    // 1. 
+    function handleClick(key) {
+        if (updateDiceState[key].scored === false && updateDiceState[key].locked === false) {
+            updateDiceState[key].locked = true;
             const action = {
                 type: 'ADJUST_DICE',
-                payload: diceInfo
+                payload: updateDiceState
             }
+            setDiceInfo(updateDiceState);
+            dispatch(action);
+        } else if (updateDiceState[key].scored === false && updateDiceState[key].locked === true) {
+            updateDiceState[key].locked = false;
+            const action = {
+                type: 'ADJUST_DICE',
+                payload: updateDiceState
+            }
+            setDiceInfo(updateDiceState);
             dispatch(action);
         } else {
             alert('Cannot unlock already scored dice!');
@@ -35,7 +50,7 @@ export default function DiceComponent(props) {
     // let server check for farkles
     return (
         <>
-            {diceInfo.map((item, i) => <div key={i}><p onClick={() => handleClick(i, item.value, item.locked)}>{item.locked === false ? '🔓' : '🔒'}</p><p>{item.value}</p>{console.log(i)}</div>)}
+            {diceInfo?.map((item, i) => <div key={i}><p onClick={() => handleClick(i)}>{item.locked === false ? '🔓' : '🔒'}</p><p>{item.value}</p></div>)}
         </>
     )
 }

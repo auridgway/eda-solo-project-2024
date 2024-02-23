@@ -105,12 +105,12 @@ router.post('/roll/:gameId', rejectUnauthenticated, (req, res) => {
   // expect to recieve an object like {id:2,round_id:2,player_id:2,d1_val, ... }
 
   let diceValues = [
-    { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored, },
-    { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored, },
-    { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored, },
-    { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored, },
-    { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored, },
-    { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored, },
+    { value: updatedTurn.d1_val, locked: updatedTurn.d1_locked, scored: updatedTurn.d1_scored, },
+    { value: updatedTurn.d2_val, locked: updatedTurn.d2_locked, scored: updatedTurn.d2_scored, },
+    { value: updatedTurn.d3_val, locked: updatedTurn.d3_locked, scored: updatedTurn.d3_scored, },
+    { value: updatedTurn.d4_val, locked: updatedTurn.d4_locked, scored: updatedTurn.d4_scored, },
+    { value: updatedTurn.d5_val, locked: updatedTurn.d5_locked, scored: updatedTurn.d5_scored, },
+    { value: updatedTurn.d6_val, locked: updatedTurn.d6_locked, scored: updatedTurn.d6_scored, },
   ]
 
   const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
