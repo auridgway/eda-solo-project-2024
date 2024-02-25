@@ -28,11 +28,11 @@ JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="game
 });
 
 // starts the game from hitting the start game button
-router.post('/start/:gameId', rejectUnauthenticated, async (req, res) => {
+router.put('/start/', rejectUnauthenticated, async (req, res) => {
   // set game to inprogress
   const sql = `update games set status = 'inprogress' where id = $1;`;
 
-  const gameId = req.params.gameId;
+  const gameId = req.body[0].id;
   try {
     await pool.query(sql, [gameId]);
     res.sendStatus(200);
@@ -73,19 +73,12 @@ router.post('/roll/', rejectUnauthenticated, (req, res) => {
   const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
   console.log(currentTurn);
   let updatedTurn = currentTurn;
-
+  let previousScore = currentTurn.current_score;
 
 
   // roll our new dice and set the values accordingly
   let diceValues = randomizeDice(updatedTurn);
-  // diceValues = [
-  //   { value: updatedTurn.d1_val, locked: updatedTurn.d1_locked, scored: updatedTurn.d1_scored, },
-  //   { value: updatedTurn.d2_val, locked: updatedTurn.d2_locked, scored: updatedTurn.d2_scored, },
-  //   { value: updatedTurn.d3_val, locked: updatedTurn.d3_locked, scored: updatedTurn.d3_scored, },
-  //   { value: updatedTurn.d4_val, locked: updatedTurn.d4_locked, scored: updatedTurn.d4_scored, },
-  //   { value: updatedTurn.d5_val, locked: updatedTurn.d5_locked, scored: updatedTurn.d5_scored, },
-  //   { value: updatedTurn.d6_val, locked: updatedTurn.d6_locked, scored: updatedTurn.d6_scored, },
-  // ]
+ 
   for (let i = 0; i < 6; i++) {
     const propVal = `d${i + 1}_val`;
     const propLocked = `d${i + 1}_locked`;
@@ -101,7 +94,7 @@ router.post('/roll/', rejectUnauthenticated, (req, res) => {
     updatedTurn.has_played = true
     updatedTurn.current_score = 0;
   } else {
-    updatedTurn.current_score = checkMelds(diceValues);
+    updatedTurn.current_score = checkMelds(diceValues) + previousScore;
   }
   updatedTurn.rolls += 1;
 
@@ -167,7 +160,7 @@ router.post('/lock/', rejectUnauthenticated, (req, res) => {
 function checkMelds(diceValues) {
   // dicevalues [{value, locked}...]
   // grabs the locked dice and filters them by values 1-6
-  let currentDice = diceValues.filter((dice) => dice.locked === true).sort((a, b) => {
+  let currentDice = diceValues.filter((dice) => dice.locked === true && dice.scored === false).sort((a, b) => {
     if (a.value < b.value) {
       return -1;
     } else if (a.value > b.value) {
@@ -347,21 +340,33 @@ function randomizeDice(diceValues) {
   if (!diceValues.d1_locked && !diceValues.d1_scored) {
     diceValues.d1_val = Math.floor(Math.random() * 7);
     console.log('randomized')
+  } else {
+    diceValues.d1_scored = true;
   }
   if (!diceValues.d2_locked && !diceValues.d1_scored) {
     diceValues.d2_val = rollDice();
+  } else {
+    diceValues.d2_scored = true;
   }
   if (!diceValues.d3_locked && !diceValues.d1_scored) {
     diceValues.d3_val = rollDice();
+  } else {
+    diceValues.d3_scored = true;
   }
   if (!diceValues.d4_locked && !diceValues.d1_scored) {
     diceValues.d4_val = rollDice();
+  } else {
+    diceValues.d4_scored = true;
   }
   if (!diceValues.d5_locked && !diceValues.d1_scored) {
     diceValues.d5_val = rollDice();
+  } else {
+    diceValues.d5_scored = true;
   }
   if (!diceValues.d6_locked && !diceValues.d1_scored) {
     diceValues.d6_val = rollDice();
+  } else {
+    diceValues.d6_scored = true;
   }
 
   tempValues = [

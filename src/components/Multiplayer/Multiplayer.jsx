@@ -7,9 +7,13 @@ export default function Multiplayer() {
     const history = useHistory();
     const dispatch = useDispatch();
 
-    function handleJoin(gameId, roundId) {
-        // const action = { type: 'JOIN_GAME', payload: { game_id: gameId, round_id: roundId } }
-        // dispatch(action);
+    function handleJoin(gameId) {
+
+        const selectedGame = games.filter((game)=>game.id === Number(gameId));
+        const roundId = selectedGame[0].rounds[selectedGame[0].rounds.length-1].id
+
+        const action = { type: 'JOIN_GAME', payload: { game_id: gameId, round_id: roundId } }
+        dispatch(action);
         history.push(`/waiting/${gameId}`);
     }
     return (
@@ -19,7 +23,7 @@ export default function Multiplayer() {
                     <div key={i}>
                         <h3>{game.lobby_name}</h3>
                         <p>{game.players.length}/8</p>
-                        <button data-gameid={game.id} data-roundid={game.rounds.id} onClick={(e) => handleJoin(e.target.dataset.gameid, e.target.dataset.roundid)}>Join</button>
+                        <button data-gameid={game.id} onClick={(e) => handleJoin(e.target.dataset.gameid)}>Join</button>
                     </div>
                 )}
             </div>

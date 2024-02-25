@@ -13,8 +13,9 @@ export default function WaitingRoom() {
     const currentGame = (games?.filter((item) => item.id === Number(gameid)));
 
     function handleStart() {
-        const action = {type: 'START_GAME'};
+        const action = {type: 'START_GAME', payload: currentGame};
         dispatch(action);
+        history.push(`/game/${gameid}`);
     }
 
     return (

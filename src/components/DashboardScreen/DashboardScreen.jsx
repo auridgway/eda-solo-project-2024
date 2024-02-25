@@ -20,7 +20,7 @@ export default function DashboardScreen() {
         const tempArray=[];
         for (const game of games){
             for (const players of game.players){
-                if (players.id===user?.id){
+                if (players.user_id===user?.id){
                     tempArray.push(game);
                 }
             }

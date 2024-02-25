@@ -21,6 +21,11 @@ function* saveScoreSaga(action) {
     yield put({ type: 'FETCH_GAMES' });
 }
 
+function* startGameSaga(action) {
+    yield axios.put(`/api/games/start/`, action.payload);
+    yield put({ type: 'FETCH_GAMES' });
+}
+
 function* joinGameSaga(action) {
     yield axios.post(`/api/lobby/join`, action.payload);
     yield put({ type: 'FETCH_GAMES' });
@@ -38,6 +43,7 @@ function* gamesSaga() {
     yield takeEvery('JOIN_GAME', joinGameSaga)
     yield takeEvery('CREATE_GAME', createGameSaga)
     yield takeEvery('SAVE_SCORE', saveScoreSaga)
+    yield takeEvery('START_GAME', startGameSaga)
 }
 
 export default gamesSaga;

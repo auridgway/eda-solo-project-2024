@@ -13,20 +13,19 @@ export default function GameplayScreen() {
     const games = useSelector(store => store.games)
     console.log(games)
     const [currentGame, setCurrentGame] = useState([]);
+    const [currentTurns, setCurrentTurn] = useState([]);
 
     useEffect(() => {
-        setCurrentGame(games?.filter((item) => item.id === Number(gameid)))
-    }, [games])
+        setCurrentGame(games?.filter((item) => item.id === Number(gameid))[0])
+        setCurrentTurn(drill());
+    }, [JSON.stringify(games)])
 
-    const currentTurn = useMemo(() => drill(), [games])
-    console.log("myGame memo", currentTurn);
-    console.log(drill());
 
-    function drill(){
-        let roundsArray = games[games.findIndex((item)=>item.id===Number(gameid))].rounds;
-        let currentRound = roundsArray[roundsArray.length-1];
-        let turnsArray = currentRound.rounds_players;
-        let currentTurn = turnsArray[turnsArray.length-1];
+    function drill() {
+        let roundsArray = games[games.findIndex((item) => item.id === Number(gameid))]?.rounds;
+        let currentRound = roundsArray[roundsArray?.length - 1];
+        let turnsArray = currentRound?.rounds_players;
+        let currentTurn = turnsArray[turnsArray?.length - 1];
         return currentTurn;
     }
 
@@ -49,19 +48,17 @@ export default function GameplayScreen() {
 
     return (
         <div>
-
-            
-                <div><p>{currentGame.id}</p>
+            <div><p>{currentGame?.id}</p>
+                <div>
                     <div>
-                        <div>
-                            {/* <p>current turn:{currentGame.players.filter(players => players.user_id === currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].player_id)[0].username}</p> */}
-                            {/* <p>current score:{currentTurns[currentTurns.length - 1].current_score}</p> */}
-                            <DiceComponents gameId={gameid} />
-                            {currentGame.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
-                            {currentGame.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}
-                        </div>
+                        <p>current turn:{''&&currentGame?.players[currentGame?.players?.findIndex((player)=>player.id===currentTurns.player_id)]?.username}</p>
+                        <p>current score:{currentTurns?.current_score}</p>
+                        <DiceComponents gameId={gameid} />
+                        {currentGame?.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
+                        {currentGame?.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}
                     </div>
                 </div>
+            </div>
             <div>
 
                 <div>

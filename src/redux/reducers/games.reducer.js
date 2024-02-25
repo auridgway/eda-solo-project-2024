@@ -8,8 +8,10 @@ const gamesReducer = (state = [], action) => {
 
       console.log(action.payload)
       const diceChecked = action.payload.response.data.dice;
-      const score = action.payload.response.data.score;
       let currentGame = action.payload.currentGame;
+      const score = action.payload.response.data.score;
+
+
 
       console.log(diceChecked);
       for (let i = 0; i < 6; i++) {
@@ -22,9 +24,10 @@ const gamesReducer = (state = [], action) => {
         currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1][propScored] = diceChecked[i].scored;
 
       }
+
       currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1].current_score = score;
       currentGameState[(currentGameState.findIndex(game => game.id === currentGame.id))] = currentGame;
-      
+
       return currentGameState;
 
     default:

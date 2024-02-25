@@ -5,15 +5,15 @@ import { useDispatch, useSelector } from "react-redux";
 export default function DiceComponent(props) {
     const games = useSelector(store => store.games)
     const currentGame = (games?.filter((item) => item.id === Number(props.gameId))[0])
-    const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
+    const currentTurn = currentGame?.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
     const [diceInfo, setDiceInfo] = useState([]);
     let updateDiceState = [
-        { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored },
-        { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored },
-        { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored },
-        { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored },
-        { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored },
-        { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored },
+        { value: currentTurn?.d1_val, locked: currentTurn?.d1_locked, scored: currentTurn?.d1_scored },
+        { value: currentTurn?.d2_val, locked: currentTurn?.d2_locked, scored: currentTurn?.d2_scored },
+        { value: currentTurn?.d3_val, locked: currentTurn?.d3_locked, scored: currentTurn?.d3_scored },
+        { value: currentTurn?.d4_val, locked: currentTurn?.d4_locked, scored: currentTurn?.d4_scored },
+        { value: currentTurn?.d5_val, locked: currentTurn?.d5_locked, scored: currentTurn?.d5_scored },
+        { value: currentTurn?.d6_val, locked: currentTurn?.d6_locked, scored: currentTurn?.d6_scored },
     ];
     
     useEffect(() => {

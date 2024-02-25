@@ -37,13 +37,11 @@ router.post('/create', rejectUnauthenticated, async (req, res) => {
     const createGame = `insert into games (owner_id, lobby_name)
     values ($1, $2)`;
     const createRounds = `insert into rounds (round_number, game_id)
-    values (0, (select id from games where owner_id=$1 order by id desc limit 1)`;
+    values (0, (select id from games where owner_id=$1 order by id desc limit 1));`;
     const createPlayers = `insert into players (user_id, game_id)
-    values ($1, select id from games where owner_id=$1 order by id desc limit 1)`;
+    values ($1, (select id from games where owner_id=$1 order by id desc limit 1))`;
     const createTurn = `insert into rounds_players ("round_id","player_id")
-    values (select id from rounds where game_id=
-        (select id from games where owner_id=$1 order by id desc limit 1) 
-        order by id desc limit 1 , $1)`;
+    values ((select id from rounds where game_id=(select id from games where owner_id=$1 order by id desc limit 1) order by id desc limit 1) , 1)`;
         // create data needs to have just the lobby name in it as well as a logged in user in order to create the game
     const createData = req.body
 
