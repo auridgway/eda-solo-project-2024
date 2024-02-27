@@ -4,13 +4,6 @@ const { rejectUnauthenticated } = require('../modules/authentication-middleware'
 const router = express.Router();
 const { getGameById } = require('../modules/queries');
 
-/**
- * GET route template
- */
-router.get('/', rejectUnauthenticated, (req, res) => {
-    // GET route code here
-
-});
 
 /*
     GET a single game info (mostly for testing)
@@ -25,9 +18,6 @@ router.get('/info/:gameId', rejectUnauthenticated, async (req, res) => {
     }
 })
 
-/**
- * POST route template
- */
 router.post('/join', rejectUnauthenticated, async (req, res) => {
     // POST route code here
     const addPlayerToGame = `insert into players (user_id, game_id) values ($1, $2)`;
@@ -43,8 +33,7 @@ router.post('/join', rejectUnauthenticated, async (req, res) => {
 
 });
 
-router.post('/leave', rejectUnauthenticated, async (req, res) => {
-    // POST route code here
+router.delete('/leave', rejectUnauthenticated, async (req, res) => {
     const leaveGame = `delete from players where user_id = $1`;
     try {
         pool.query(leaveGame, [req.user.id])
@@ -61,7 +50,6 @@ router.post('/create/', rejectUnauthenticated, async (req, res) => {
     // testGame=true
     const testGame = req.query.testGame || false;
 
-
     // POST route code here
     const createGame = `insert into games (owner_id, lobby_name) values ($1, $2) RETURNING *`;
     const createPlayers = `insert into players (user_id, game_id) values ($1, $2)`;
@@ -76,24 +64,6 @@ router.post('/create/', rejectUnauthenticated, async (req, res) => {
 
         // make a player in the players table
         await pool.query(createPlayers, [req.user.id, gameId]);
-
-        // make a round for the game in the rounds table
-        // const createRounds = `insert into rounds (round_number, game_id) values (0, $1) RETURNING *;`;
-        // const result2 = await pool.query(createRounds, [gameId]);
-        // const roundId = result2.rows[0].id;
-
-        // give the player an opening turn in the rounds_players table
-        // const dice_values = [1, 5, 3, 6, 4, 6];
-        // if (!testGame) {
-        //     dice_values.length = 0;
-        //     for (let i=0; i<6; i++) {
-        //         // sets dice to 1-6 for a test game, or randomizes 1-6
-        //         dice_values.push(Math.ceil(Math.random() * 6))
-        //     }
-        // }
-        // const createTurn = `insert into rounds_players 
-        // ("round_id","player_id","d1_val","d2_val","d3_val","d4_val","d5_val","d6_val") values ($1, $2, $3, $4, $5, $6, $7, $8)`;
-        // await pool.query(createTurn, [roundId, req.user.id, ...dice_values]);
 
         res.send(result1.rows[0]);
     } catch (error) {

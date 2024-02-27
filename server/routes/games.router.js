@@ -4,11 +4,9 @@ const { rejectUnauthenticated } = require('../modules/authentication-middleware'
 const router = express.Router();
 
 const { getGameById, getAllGames, createNewTurnByGameId } = require('../modules/queries');
-/**
- * GET route template
- */
+
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user', async (req, res) => {
+router.get('/user', rejectUnauthenticated, async (req, res) => {
   const allGames = await getAllGames();
   res.send(allGames);
 });
@@ -28,66 +26,6 @@ router.put('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   }
 });
 
-// sets a new turn (this is not used currently)
-// router.post('/turn/', rejectUnauthenticated, async (req, res) => {
-//   // put route code here
-//   const gameData = req.body;
-//   const createRound = `insert into rounds ("round_number","game_id") values ($1, $2) returning *;`;
-//   const response = await pool.query(createRound, [gameData.rounds[gameData.rounds.length - 1].round_number + 1, Number(req.params.gameId)])
-//   // set game to inprogress
-//   const gameId = req.body[0].id;
-//   try {
-//     // For each player, roll their initial roll
-//     // make a round for the game in the rounds table
-//     const createRounds = `insert into rounds (round_number, game_id) values (0, $1) RETURNING *;`;
-//     const result2 = await pool.query(createRounds, [gameId]);
-//     const roundId = result2.rows[0].id;
-
-//     const result3 = `SELECT * FROM "players" WHERE "game_id"=$1`;
-//     const playersResult = await pool.query(result3, [gameId]);
-
-//     for (const player of playersResult.rows) {
-//       // give the player an opening turn in the rounds_players table
-//       const dice_values = [1, 5, 3, 6, 4, 6];
-//       if (!testGame) {
-//         dice_values.length = 0;
-//         for (let i = 0; i < 6; i++) {
-//           // sets dice to 1-6 for a test game, or randomizes 1-6
-//           dice_values.push(Math.ceil(Math.random() * 6))
-//         }
-//       }
-//       const createTurn = `
-//         insert into rounds_players 
-//         ("round_id","player_id","d1_val","d2_val","d3_val","d4_val","d5_val","d6_val") 
-//         values ($1, $2, $3, $4, $5, $6, $7, $8)`;
-//       await pool.query(createTurn, [roundId, player.user_id, ...dice_values]);
-//       // res.send(currentGame);
-
-//       // Send back the current game but in a nice pretty format
-//       const finalResult = await pool.query(`
-//       SELECT *,
-// (SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (
-//   SELECT *, 
-//     (SELECT coalesce(jsonb_agg(item2), '[]'::jsonb) FROM (
-//       SELECT * FROM "rounds_players" WHERE "rounds_players"."round_id"="rounds"."id"
-//     ) item2) as "rounds_players"
-//   FROM "rounds" WHERE "rounds"."game_id"="games"."id" ORDER BY "rounds"."round_number" DESC)
-//   item) as "rounds",
-// (SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT "players".*, "user"."username" FROM "players" 
-// JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
-// from "games" WHERE id=$1;
-//       `, [gameId]);
-//       res.send(finalResult.rows[0]);
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     res.sendStatus(500);
-//   }
-
-// });
-
-
-
 // rolls current turn
 router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
   const isBanked = req.query.bank || false; // ?bank=true or ?bank=false (default)
@@ -95,6 +33,13 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
   const dice = req.body; // [{value: 1, locked: true,}]
 
   console.log(dice);
+
+  // TO TRACK SCORE WE NEED TO:
+  //  1. Take our score from last turn ✅
+  //  2. Calculate for the score for this turn ✅
+  //  3. Combine them into the new current score
+  //  4. Store it for next turn and apply that new variable to next roll
+  //  5.
 
   try {
     // grabs current game
@@ -108,6 +53,8 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
     // grabs score of current locked dice
     // [{value, locked, scored}]
     // STEP 1: CALCULATE THE SCORE OF LOCKED DICE
+    myTurn.cumulative_score = myTurn.current_score;
+    let lastScore = myTurn.cumulative_score;
     let lockedScore = checkMelds(dice); // assumes that frontend is correct with scored/locked values
     console.log(`Locked Score:`, lockedScore);
     // wants turn object with d1_val, d2_val d3_val
@@ -160,20 +107,17 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
         scoredAll = false;
 
 
-        myTurn.cumulative_score = lockedScore
-        myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+        myTurn.current_score = lastScore + lockedScore;
         console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
       } else {
-        myTurn.cumulative_score = lockedScore;
-        myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+        myTurn.current_score = lastScore + lockedScore;
         console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
       }
       myTurn.rolls += 1;
     } else {
       // player banked the rolls, so lets move on
       // set the score, set the has_played
-      myTurn.cumulative_score = lockedScore;
-      myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+      myTurn.current_score = lastScore + lockedScore;
       console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
       myTurn.has_played = true;
     }
@@ -226,7 +170,7 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       // record score, see if we won
       // ALSO: update this game's current player's turn id
       const sql3 = `update games set status = $1, winner_id = $2, where id=$3 returning *`;
-      const sql2 = `update players set score = $1 where user_id = $2 returning *`;
+      const sql2 = `update players set score = score + $1 where user_id = $2 returning *`;
       const sql = `select player_id, has_played from rounds_players where round_id = $1`;
       const sql4 = `update games set current_turn = $1 where id=$2 returning *`
       // update score
@@ -235,18 +179,19 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       if (updatedScoreResult.rows.score >= 10000) {
         // if win, win game
         const gameWinResult = await pool.query(sql3, ['completed', myTurn.player_id, gameId]);
+        res.send(gameWinResult);
       } else {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
         const selectPlayersResult = await pool.query(sql, [gameId]);
-        const nextPlayer = selectPlayersResult.rows.filter((player)=>player.has_played===false)[0]
-        
-        const gameWinResult = await pool.query(sql4, [nextPlayer.id, gameId]);
+        const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)[0]
+
+        const nextPlayerResult = await pool.query(sql4, [nextPlayer.id, gameId]);
       }
     }
 
     const finalUpdatedGame = await getGameById(gameId);
     const finalTurn = finalUpdatedGame.rounds[0].rounds_players;
-    if (finalTurn.any(rp => rp.has_played === false)) {
+    if (finalTurn.some(rp => rp.has_played === false)) {
       // still have people to play
     } else {
       // everyone has played
@@ -272,27 +217,6 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
   }
 });
 
-router.post('/round', rejectUnauthenticated, (req, res) => {
-  const currentGame = req.body;
-  // how do i go about this?
-
-});
-
-// saves score of players turn
-router.put('/save', rejectUnauthenticated, (req, res) => {
-  const currentGame = req.body;
-  let updatedTurn = currentGame;
-
-  const sql = `update rounds_players (has_played, current_score)
-  values ($1, $2) where game_id = $3`;
-
-  updatedTurn.has_played = true;
-  updatedTurn.current_score = cumulative_score;
-  pool.query(sql, [updatedTurn.has_played, updatedTurn.current_score, req.params.gameId]).then(() => {
-    res.sendStatus(200)
-  }).catch((error) => console.log(error));
-});
-
 router.post('/lock/', rejectUnauthenticated, (req, res) => {
   // POST route code here
   // req.body NEEDS to be in this format [{values: x, locked: x, scored: x}, ...] just send all dice when you send this request
@@ -302,15 +226,6 @@ router.post('/lock/', rejectUnauthenticated, (req, res) => {
   res.send({ score: checkMelds(diceValues), dice: diceValues });
 
 });
-
-// test data for melds
-// returns 3000 as it should - const diceValues = [{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},{value: 3, locked: true},];
-// returns 150 as it should - const diceValues = [{value: 1, locked: true},{value: 5, locked: true},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},{value: 3, locked: false},];
-// returns 1500 as it should - const diceValues = [{value: 1, locked: true},{value: 2, locked: true},{value: 3, locked: true},{value: 4, locked: true},{value: 5, locked: true},{value: 6, locked: true},];
-// const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 5, locked: true }, { value: 1, locked: true }, { value: 3, locked: false },];
-// returns 1500 as it should - const diceValues = [{ value: 2, locked: true }, { value: 2, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true },];
-// returns 1150 as it should - const diceValues = [{ value: 1, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 5, locked: true },];
-// returns 500 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 1, locked: true }, { value: 5, locked: true }, { value: 5, locked: true },];
 
 function checkMelds(diceValues, checkUnScored = false) {
   // dicevalues [{value, locked}...]
