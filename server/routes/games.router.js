@@ -3,137 +3,292 @@ const pool = require('../modules/pool');
 const { rejectUnauthenticated } = require('../modules/authentication-middleware');
 const router = express.Router();
 
+const { getGameById, getAllGames, createNewTurnByGameId } = require('../modules/queries');
 /**
  * GET route template
  */
 // this will get the players active games when they are on the initial login dashboard screen
-router.get('/user', (req, res) => {
-
-  const sql = `
-  SELECT *,
-	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (
-		SELECT *, 
-			(SELECT coalesce(jsonb_agg(item2), '[]'::jsonb) FROM (
-				SELECT * FROM "rounds_players" WHERE "rounds_players"."round_id"="rounds"."id"
-			) item2) as "rounds_players"
-		FROM "rounds" WHERE "rounds"."game_id"="games"."id" ORDER BY "rounds"."round_number" DESC)
-		item) as "rounds",
-	(SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT "players".*, "user"."username" FROM "players" 
-JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
-	from "games";`
-
-  pool.query(sql).then((result) => {
-    res.send(result.rows)
-  }).catch((err) => console.log(err));
+router.get('/user', async (req, res) => {
+  const allGames = await getAllGames();
+  res.send(allGames);
 });
 
 // starts the game from hitting the start game button
-router.put('/start/', rejectUnauthenticated, async (req, res) => {
-  // set game to inprogress
-  const sql = `update games set status = 'inprogress' where id = $1;`;
+router.put('/start/:gameId', rejectUnauthenticated, async (req, res) => {
+  const testGame = req.query.testGame || false;
+  // const gameId = req.body[0].id;
+  const gameId = req.params.gameId;
 
-  const gameId = req.body[0].id;
   try {
-    await pool.query(sql, [gameId]);
-    res.sendStatus(200);
+    const updatedGame = await createNewTurnByGameId(gameId, testGame);
+    res.send(updatedGame);
   } catch (err) {
     console.error(err);
     res.sendStatus(500);
   }
 });
 
-// sets a new turn
-router.post('/turn/', rejectUnauthenticated, (req, res) => {
-  // put route code here
-  const gameData = req.body;
-  let newGameData = gameData;
-  let playerInfo = [];
+// sets a new turn (this is not used currently)
+// router.post('/turn/', rejectUnauthenticated, async (req, res) => {
+//   // put route code here
+//   const gameData = req.body;
+//   const createRound = `insert into rounds ("round_number","game_id") values ($1, $2) returning *;`;
+//   const response = await pool.query(createRound, [gameData.rounds[gameData.rounds.length - 1].round_number + 1, Number(req.params.gameId)])
+//   // set game to inprogress
+//   const gameId = req.body[0].id;
+//   try {
+//     // For each player, roll their initial roll
+//     // make a round for the game in the rounds table
+//     const createRounds = `insert into rounds (round_number, game_id) values (0, $1) RETURNING *;`;
+//     const result2 = await pool.query(createRounds, [gameId]);
+//     const roundId = result2.rows[0].id;
 
-  if (gameData.status !== 'inprogess') {
-    res.send({ error: 'game is not in progress' }).status(400);
-  } else {
-    // trying to grab player info to see if all players have played?
-    const getPlayers = `select * from "players" where game_id=$1 order by joined_at asc;`;
-    // get our current player information
-    pool.query(getPlayers, [req.params.gameId]).then((result) => {
-      playerInfo = result.rows;
-    }).catch((error) => console.log(error));
+//     const result3 = `SELECT * FROM "players" WHERE "game_id"=$1`;
+//     const playersResult = await pool.query(result3, [gameId]);
 
-    if (playerInfo === undefined) {
-      console.error('Players info not found.')
+//     for (const player of playersResult.rows) {
+//       // give the player an opening turn in the rounds_players table
+//       const dice_values = [1, 5, 3, 6, 4, 6];
+//       if (!testGame) {
+//         dice_values.length = 0;
+//         for (let i = 0; i < 6; i++) {
+//           // sets dice to 1-6 for a test game, or randomizes 1-6
+//           dice_values.push(Math.ceil(Math.random() * 6))
+//         }
+//       }
+//       const createTurn = `
+//         insert into rounds_players 
+//         ("round_id","player_id","d1_val","d2_val","d3_val","d4_val","d5_val","d6_val") 
+//         values ($1, $2, $3, $4, $5, $6, $7, $8)`;
+//       await pool.query(createTurn, [roundId, player.user_id, ...dice_values]);
+//       // res.send(currentGame);
+
+//       // Send back the current game but in a nice pretty format
+//       const finalResult = await pool.query(`
+//       SELECT *,
+// (SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (
+//   SELECT *, 
+//     (SELECT coalesce(jsonb_agg(item2), '[]'::jsonb) FROM (
+//       SELECT * FROM "rounds_players" WHERE "rounds_players"."round_id"="rounds"."id"
+//     ) item2) as "rounds_players"
+//   FROM "rounds" WHERE "rounds"."game_id"="games"."id" ORDER BY "rounds"."round_number" DESC)
+//   item) as "rounds",
+// (SELECT coalesce(jsonb_agg(item), '[]'::jsonb) FROM (SELECT "players".*, "user"."username" FROM "players" 
+// JOIN "user" ON "user"."id" = "players"."user_id" WHERE "players"."game_id"="games"."id") item) as "players"
+// from "games" WHERE id=$1;
+//       `, [gameId]);
+//       res.send(finalResult.rows[0]);
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     res.sendStatus(500);
+//   }
+
+// });
+
+
+
+// rolls current turn
+router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
+  const isBanked = req.query.bank || false; // ?bank=true or ?bank=false (default)
+  const gameId = Number(req.params.gameid);
+  const dice = req.body; // [{value: 1, locked: true,}]
+
+  console.log(dice);
+
+  try {
+    // grabs current game
+    const thisGame = await getGameById(gameId);
+    const thisRound = thisGame.rounds[0]; // most recent round (which is this round)
+    const myTurn = thisRound.rounds_players.find(rp => rp.player_id === req.user.id); // this user's current turn under this round
+    console.log('this is my turn', myTurn);
+    console.log('these are the dice we sent', dice);
+    // const currentTurn = thisRound.rounds_players[thisGame.rounds[thisGame.rounds.length - 1].rounds_players.length - 1];
+
+    // grabs score of current locked dice
+    // [{value, locked, scored}]
+    // STEP 1: CALCULATE THE SCORE OF LOCKED DICE
+    let lockedScore = checkMelds(dice); // assumes that frontend is correct with scored/locked values
+    console.log(`Locked Score:`, lockedScore);
+    // wants turn object with d1_val, d2_val d3_val
+
+    // STEP 2: MARK LOCKED DICE AS SCORED
+    for (let i = 0; i < 6; i++) {
+      const propVal = `d${i + 1}_val`;
+      const propLocked = `d${i + 1}_locked`;
+      const propScored = `d${i + 1}_scored`;
+
+      // update this turn's state: lock dice, set as scored
+      myTurn[propVal] = dice[i].value;
+      myTurn[propLocked] = dice[i].locked;
+      myTurn[propScored] = dice[i].locked;
+    }
+    console.log('after setting turn', myTurn)
+    // console.log(`dice values`, myTurn);
+    // STEP 3: RE-ROLL ALL UNLOCKED DICE, ASSUMING WE CAN STILL PLAY (NO FARKLE)
+    let diceValues = randomizeDice(myTurn); // marking as scored, re-rolling unlocked dice
+    // let updatedTurn = getGame;
+
+    // turn any locked dice into scored dice
+    // check for farkle
+    // update turn in database
+
+    // STEP 4: UPDATE THE DATABASE WITH THE SCORE, NEW DICE VALUES AND STATUS
+    if (!isBanked) {
+      // only save re-rolled dice is we're not banking the score
+      for (let i = 0; i < 6; i++) {
+        const propVal = `d${i + 1}_val`;
+        myTurn[propVal] = diceValues[i].value;
+      }
+      let scoredAll = false;
+      let tempArr = [];
+      for (let i = 0; i < 6; i++) {
+        const propVal = `d${i + 1}_scored`;
+        tempArr.push(myTurn[propVal]);
+      }
+      if (!tempArr.includes(false)) {
+        scoredAll = true;
+      }
+      // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
+      if (checkMelds(diceValues, true) === 0 && scoredAll === false) {
+        myTurn.farkle = true;
+        myTurn.has_played = true;
+        myTurn.current_score = 0;
+        myTurn.cumulative_score = 0;
+        console.log(`Sorry, you farkled. Score of ${lockedScore} lost`);
+      } else if (scoredAll === true) {
+        scoredAll = false;
+
+
+        myTurn.cumulative_score = lockedScore
+        myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+        console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
+      } else {
+        myTurn.cumulative_score = lockedScore;
+        myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+        console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
+      }
+      myTurn.rolls += 1;
+    } else {
+      // player banked the rolls, so lets move on
+      // set the score, set the has_played
+      myTurn.cumulative_score = lockedScore;
+      myTurn.current_score = myTurn.cumulative_score + checkMelds(diceValues);
+      console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
+      myTurn.has_played = true;
     }
 
+    const sql = `UPDATE rounds_players
+    SET 
+        d1_val = $3,
+        d1_locked = $4,
+        d2_val = $5,
+        d2_locked = $6,
+        d3_val = $7,
+        d3_locked = $8,
+        d4_val = $9,
+        d4_locked = $10,
+        d5_val = $11,
+        d5_locked = $12,
+        d6_val = $13,
+        d6_locked = $14,
+        current_score = $15,
+        rolls = $16,
+        farkle = $17,
+        has_played = $18,
+        d1_scored = $19,
+        d2_scored = $20,
+        d3_scored = $21,
+        d4_scored = $22,
+        d5_scored = $23,
+        d6_scored = $24,
+        cumulative_score = $25
+    WHERE round_id = $1 AND player_id = $2 RETURNING *;`;
+
+    const finalResult = await pool.query(sql, [
+      myTurn.round_id, myTurn.player_id,
+      myTurn.d1_val, myTurn.d1_locked,
+      myTurn.d2_val, myTurn.d2_locked,
+      myTurn.d3_val, myTurn.d3_locked,
+      myTurn.d4_val, myTurn.d4_locked,
+      myTurn.d5_val, myTurn.d5_locked,
+      myTurn.d6_val, myTurn.d6_locked,
+      myTurn.current_score, myTurn.rolls,
+      myTurn.farkle, myTurn.has_played,
+      myTurn.d1_scored, myTurn.d2_scored,
+      myTurn.d3_scored, myTurn.d4_scored,
+      myTurn.d5_scored, myTurn.d6_scored,
+      myTurn.cumulative_score,
+    ]);
+
+    if (myTurn.has_played) {
+      // we have either farkled OR banked, either way we're done
+      // record score, see if we won
+      // ALSO: update this game's current player's turn id
+      const sql3 = `update games set status = $1, winner_id = $2, where id=$3 returning *`;
+      const sql2 = `update players set score = $1 where user_id = $2 returning *`;
+      const sql = `select player_id, has_played from rounds_players where round_id = $1`;
+      const sql4 = `update games set current_turn = $1 where id=$2 returning *`
+      // update score
+      const updatedScoreResult = await pool.query(sql2, [myTurn.current_score, myTurn.player_id])
+      // check for if win game
+      if (updatedScoreResult.rows.score >= 10000) {
+        // if win, win game
+        const gameWinResult = await pool.query(sql3, ['completed', myTurn.player_id, gameId]);
+      } else {
+        // select players, joined on rounds_players? then try to see whose turn it is next based on game
+        const selectPlayersResult = await pool.query(sql, [gameId]);
+        const nextPlayer = selectPlayersResult.rows.filter((player)=>player.has_played===false)[0]
+        
+        const gameWinResult = await pool.query(sql4, [nextPlayer.id, gameId]);
+      }
+    }
+
+    const finalUpdatedGame = await getGameById(gameId);
+    const finalTurn = finalUpdatedGame.rounds[0].rounds_players;
+    if (finalTurn.any(rp => rp.has_played === false)) {
+      // still have people to play
+    } else {
+      // everyone has played
+      // INSERT NEW ROUND
+      // ROLL NEW DICE FOR EACH PLAYER, ETC.
+      console.log(`All players have taken their turn, making new turn`);
+      const updatedGame = await createNewTurnByGameId(gameId);
+      res.send(updatedGame);
+      return;
+    }
+
+    // OK turn is done being processed. Now:
+    //  If the player's turn is over (banked or farkle):
+    //    1. Record the final score on the other table
+    //    2. Check to see if the game is finished (total score > 10000)
+    //  If this player's turn is the last one left:
+    //    1. Create a new Round, RoundsPlayer entry (re-roll dice for all players)
+    //      (insert new record, roll 6 dice, default values, etc) for each player
+    res.send((await getGameById(gameId)));
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(400);
   }
 });
 
-// rolls current turn
-router.post('/roll/', rejectUnauthenticated, (req, res) => {
-  console.log('in roll')
+router.post('/round', rejectUnauthenticated, (req, res) => {
   const currentGame = req.body;
-  const currentTurn = currentGame.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
-  console.log(currentTurn);
-  let updatedTurn = currentTurn;
-  let previousScore = currentTurn.current_score;
+  // how do i go about this?
 
-
-  // roll our new dice and set the values accordingly
-  let diceValues = randomizeDice(updatedTurn);
- 
-  for (let i = 0; i < 6; i++) {
-    const propVal = `d${i + 1}_val`;
-    const propLocked = `d${i + 1}_locked`;
-    const propScored = `d${i + 1}_scored`;
-
-    updatedTurn[propVal] = diceValues[i].value;
-    updatedTurn[propLocked] = diceValues[i].locked;
-    updatedTurn[propScored] = diceValues[i].scored;
-  }
-  // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
-  if (checkMelds(diceValues) === 0) {
-    updatedTurn.farkle = true;
-    updatedTurn.has_played = true
-    updatedTurn.current_score = 0;
-  } else {
-    updatedTurn.current_score = checkMelds(diceValues) + previousScore;
-  }
-  updatedTurn.rolls += 1;
-
-
-  const sql = `insert into rounds_players ("round_id","player_id","d1_val","d1_locked","d2_val","d2_locked","d3_val","d3_locked","d4_val","d4_locked","d5_val","d5_locked","d6_val","d6_locked","current_score","rolls","farkle","has_played","d1_scored","d2_scored","d3_scored","d4_scored","d5_scored","d6_scored")
-  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`;
-
-  pool.query(sql, [
-    updatedTurn.round_id, updatedTurn.player_id,
-    updatedTurn.d1_val, updatedTurn.d1_locked,
-    updatedTurn.d2_val, updatedTurn.d2_locked,
-    updatedTurn.d3_val, updatedTurn.d3_locked,
-    updatedTurn.d4_val, updatedTurn.d4_locked,
-    updatedTurn.d5_val, updatedTurn.d5_locked,
-    updatedTurn.d6_val, updatedTurn.d6_locked,
-    updatedTurn.current_score, updatedTurn.rolls,
-    updatedTurn.farkle, updatedTurn.has_played,
-    updatedTurn.d1_scored, updatedTurn.d2_scored,
-    updatedTurn.d3_scored, updatedTurn.d4_scored,
-    updatedTurn.d5_scored, updatedTurn.d6_scored,
-  ]).then((results) => {
-    res.sendStatus(200);
-  }).catch((error) => console.log(error));
 });
 
 // saves score of players turn
-router.put('/save/', rejectUnauthenticated, (req, res) => {
-  const sql = `update rounds_players set has_played=$1, current_score=$2 where game_id = $3`;
-  const diceValues = [
-    { value: newGameData.d1_val, locked: newGameData.d1_locked },
-    { value: newGameData.d2_val, locked: newGameData.d2_locked },
-    { value: newGameData.d3_val, locked: newGameData.d3_locked },
-    { value: newGameData.d4_val, locked: newGameData.d4_locked },
-    { value: newGameData.d5_val, locked: newGameData.d5_locked },
-    { value: newGameData.d6_val, locked: newGameData.d6_locked },
-  ]
-  newGameData.has_played = true;
-  newGameData.current_score = gameData.current_score + checkMelds(diceValues)
-  pool.query(sql, [newGameData.has_played, newGameData.current_score, req.params.gameId]).then(() => {
+router.put('/save', rejectUnauthenticated, (req, res) => {
+  const currentGame = req.body;
+  let updatedTurn = currentGame;
+
+  const sql = `update rounds_players (has_played, current_score)
+  values ($1, $2) where game_id = $3`;
+
+  updatedTurn.has_played = true;
+  updatedTurn.current_score = cumulative_score;
+  pool.query(sql, [updatedTurn.has_played, updatedTurn.current_score, req.params.gameId]).then(() => {
     res.sendStatus(200)
   }).catch((error) => console.log(error));
 });
@@ -142,7 +297,7 @@ router.post('/lock/', rejectUnauthenticated, (req, res) => {
   // POST route code here
   // req.body NEEDS to be in this format [{values: x, locked: x, scored: x}, ...] just send all dice when you send this request
   const diceValues = req.body;
-
+  console.log(diceValues);
   // 0 means no scoring and anything else means your dice scored - a zero score will reflect on the clients end
   res.send({ score: checkMelds(diceValues), dice: diceValues });
 
@@ -157,18 +312,19 @@ router.post('/lock/', rejectUnauthenticated, (req, res) => {
 // returns 1150 as it should - const diceValues = [{ value: 1, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 2, locked: true }, { value: 5, locked: true },];
 // returns 500 as it should - const diceValues = [{ value: 3, locked: true }, { value: 3, locked: true }, { value: 3, locked: true }, { value: 1, locked: true }, { value: 5, locked: true }, { value: 5, locked: true },];
 
-function checkMelds(diceValues) {
+function checkMelds(diceValues, checkUnScored = false) {
   // dicevalues [{value, locked}...]
   // grabs the locked dice and filters them by values 1-6
-  let currentDice = diceValues.filter((dice) => dice.locked === true && dice.scored === false).sort((a, b) => {
-    if (a.value < b.value) {
-      return -1;
-    } else if (a.value > b.value) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
+  let currentDice = diceValues.filter((dice) => (!checkUnScored) ? dice.locked === true && dice.scored === false : dice.scored === false)
+    .sort((a, b) => {
+      if (a.value < b.value) {
+        return -1;
+      } else if (a.value > b.value) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
   let tempScore = 0;
   // checks to see if we only have one current dice. if so we see if it equals 1 or 5 then return their meld values
   //ONE LOCKED DICE - will flow to bottom to be taken care of
@@ -337,35 +493,35 @@ function applyThreeScore(index, tempScore, currentDice) {
 
 function randomizeDice(diceValues) {
   let tempValues = diceValues
-  if (!diceValues.d1_locked && !diceValues.d1_scored) {
-    diceValues.d1_val = Math.floor(Math.random() * 7);
-    console.log('randomized')
-  } else {
+  console.log('randomize dice function values', diceValues);
+  if (diceValues.d1_locked === false && diceValues.d1_scored === false) {
+    diceValues.d1_val = rollDice();
+  } else if (diceValues.d1_locked === true && diceValues.d1_scored === false) {
     diceValues.d1_scored = true;
   }
-  if (!diceValues.d2_locked && !diceValues.d1_scored) {
+  if (!diceValues.d2_locked && !diceValues.d2_scored) {
     diceValues.d2_val = rollDice();
-  } else {
+  } else if (diceValues.d2_locked === true && diceValues.d2_scored === false) {
     diceValues.d2_scored = true;
   }
-  if (!diceValues.d3_locked && !diceValues.d1_scored) {
+  if (!diceValues.d3_locked && !diceValues.d3_scored) {
     diceValues.d3_val = rollDice();
-  } else {
+  } else if (diceValues.d3_locked === true && diceValues.d3_scored === false) {
     diceValues.d3_scored = true;
   }
-  if (!diceValues.d4_locked && !diceValues.d1_scored) {
+  if (!diceValues.d4_locked && !diceValues.d4_scored) {
     diceValues.d4_val = rollDice();
-  } else {
+  } else if (diceValues.d4_locked === true && diceValues.d4_scored === false) {
     diceValues.d4_scored = true;
   }
-  if (!diceValues.d5_locked && !diceValues.d1_scored) {
+  if (!diceValues.d5_locked && !diceValues.d5_scored) {
     diceValues.d5_val = rollDice();
-  } else {
+  } else if (diceValues.d5_locked === true && diceValues.d5_scored === false) {
     diceValues.d5_scored = true;
   }
-  if (!diceValues.d6_locked && !diceValues.d1_scored) {
+  if (!diceValues.d6_locked && !diceValues.d6_scored) {
     diceValues.d6_val = rollDice();
-  } else {
+  } else if (diceValues.d6_locked === true && diceValues.d6_scored === false) {
     diceValues.d6_scored = true;
   }
 
@@ -377,12 +533,13 @@ function randomizeDice(diceValues) {
     { value: diceValues.d5_val, locked: diceValues.d5_locked, scored: diceValues.d5_scored, },
     { value: diceValues.d6_val, locked: diceValues.d6_locked, scored: diceValues.d6_scored, },
   ]
+  console.log('randomize dice function values ending', tempValues);
 
   return tempValues;
 }
 
 function rollDice() {
-  return Math.ceil(Math.random() * 5);
+  return Math.ceil(Math.random() * 6);
 }
 
 module.exports = router;

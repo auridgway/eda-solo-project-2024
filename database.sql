@@ -57,4 +57,5 @@ CREATE TABLE players (
     game_id SERIAL REFERENCES games(id),
     user_resigned boolean NOT NULL DEFAULT false,
     joined_at timestamp without time zone DEFAULT CURRENT_DATE
+	    CONSTRAINT players_user_id_game_id_key UNIQUE (user_id, game_id)
 );

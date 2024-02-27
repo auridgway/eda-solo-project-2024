@@ -22,7 +22,7 @@ function* saveScoreSaga(action) {
 }
 
 function* startGameSaga(action) {
-    yield axios.put(`/api/games/start/`, action.payload);
+    yield axios.put(`/api/games/start/${action.payload}`);
     yield put({ type: 'FETCH_GAMES' });
 }
 

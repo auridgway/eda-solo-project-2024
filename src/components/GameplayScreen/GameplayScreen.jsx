@@ -11,7 +11,6 @@ export default function GameplayScreen() {
     const dispatch = useDispatch();
     const history = useHistory();
     const games = useSelector(store => store.games)
-    console.log(games)
     const [currentGame, setCurrentGame] = useState([]);
     const [currentTurns, setCurrentTurn] = useState([]);
 
@@ -22,11 +21,15 @@ export default function GameplayScreen() {
 
 
     function drill() {
-        let roundsArray = games[games.findIndex((item) => item.id === Number(gameid))]?.rounds;
-        let currentRound = roundsArray[roundsArray?.length - 1];
-        let turnsArray = currentRound?.rounds_players;
-        let currentTurn = turnsArray[turnsArray?.length - 1];
-        return currentTurn;
+        if (games.length <= 0) {
+            return [];
+        } else {
+            let roundsArray = games[games.findIndex((item) => item.id === Number(gameid))].rounds;
+            let currentRound = roundsArray[roundsArray.length - 1];
+            let turnsArray = currentRound.rounds_players;
+            let currentTurn = turnsArray[turnsArray.length - 1];
+            return currentTurn;
+        }
     }
 
     function handleRoll() {
@@ -48,12 +51,13 @@ export default function GameplayScreen() {
 
     return (
         <div>
-            <div><p>{currentGame?.id}</p>
+            <div>
+                <p>{currentGame?.id}</p>
                 <div>
                     <div>
-                        <p>current turn:{''&&currentGame?.players[currentGame?.players?.findIndex((player)=>player.id===currentTurns.player_id)]?.username}</p>
+                        <p>current turn:{'' && currentGame?.players[currentGame?.players?.findIndex((player) => player.id === currentTurns.player_id)]?.username}</p>
                         <p>current score:{currentTurns?.current_score}</p>
-                        <DiceComponents gameId={gameid} />
+                        <DiceComponents gameId={gameid} games={games} />
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}
                     </div>

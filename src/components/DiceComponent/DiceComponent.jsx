@@ -3,43 +3,61 @@ import { useDispatch, useSelector } from "react-redux";
 
 
 export default function DiceComponent(props) {
-    const games = useSelector(store => store.games)
-    const currentGame = (games?.filter((item) => item.id === Number(props.gameId))[0])
-    const currentTurn = currentGame?.rounds[currentGame.rounds.length - 1].rounds_players[currentGame.rounds[currentGame.rounds.length - 1].rounds_players.length - 1];
-    const [diceInfo, setDiceInfo] = useState([]);
-    let updateDiceState = [
-        { value: currentTurn?.d1_val, locked: currentTurn?.d1_locked, scored: currentTurn?.d1_scored },
-        { value: currentTurn?.d2_val, locked: currentTurn?.d2_locked, scored: currentTurn?.d2_scored },
-        { value: currentTurn?.d3_val, locked: currentTurn?.d3_locked, scored: currentTurn?.d3_scored },
-        { value: currentTurn?.d4_val, locked: currentTurn?.d4_locked, scored: currentTurn?.d4_scored },
-        { value: currentTurn?.d5_val, locked: currentTurn?.d5_locked, scored: currentTurn?.d5_scored },
-        { value: currentTurn?.d6_val, locked: currentTurn?.d6_locked, scored: currentTurn?.d6_scored },
-    ];
-    
-    useEffect(() => {
-        setDiceInfo(updateDiceState);
-    }, [games])
+    const games = props.games;
 
+    const diceInfo = useSelector(store => store.dice);
+
+    const [currentGame, setCurrentGame] = useState([]);
+    const [currentTurn, setCurrentTurn] = useState([]);
+
+    useEffect(() => {
+        setCurrentGame(games?.filter((item) => item.id === Number(props.gameId))[0])
+        setCurrentTurn(drill());
+    }, [JSON.stringify(games)])
+
+    useEffect(() => {
+        const action = {
+            type: 'SET_DICE', payload: [
+                { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored },
+                { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored },
+                { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored },
+                { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored },
+                { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored },
+                { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored },]
+        }
+        dispatch(action);
+    }, [currentTurn]);
+
+    function drill() {
+        if (games.length <= 0) {
+            return [];
+        } else {
+            let roundsArray = games[games.findIndex((game) => game.id === Number(props.gameId))].rounds;
+            let currentRound = roundsArray[roundsArray.length - 1];
+            let turnsArray = currentRound.rounds_players;
+            let currentTurn = turnsArray[turnsArray.length - 1];
+            return currentTurn;
+        }
+    }
     const dispatch = useDispatch();
 
     // when this gets clicked we need to do these things
     // 1. 
     function handleClick(key) {
-        if (updateDiceState[key].scored === false && updateDiceState[key].locked === false) {
-            updateDiceState[key].locked = true;
+        let tempDice = diceInfo;
+        if (diceInfo[key].scored === false && diceInfo[key].locked === false) {
+            tempDice[key].locked = true;
             const action = {
                 type: 'ADJUST_DICE',
-                payload: {updateDiceState, currentGame}
+                payload: { tempDice, currentGame }
             }
-            setDiceInfo(updateDiceState);
             dispatch(action);
-        } else if (updateDiceState[key].scored === false && updateDiceState[key].locked === true) {
-            updateDiceState[key].locked = false;
+        } else if (diceInfo[key].scored === false && diceInfo[key].locked === true) {
+            tempDice[key].locked = false;
             const action = {
                 type: 'ADJUST_DICE',
-                payload: {updateDiceState, currentGame}
+                payload: { tempDice, currentGame }
             }
-            setDiceInfo(updateDiceState);
             dispatch(action);
         } else {
             alert('Cannot unlock already scored dice!');

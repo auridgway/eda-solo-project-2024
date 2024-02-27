@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../modules/pool');
 const { rejectUnauthenticated } = require('../modules/authentication-middleware');
 const router = express.Router();
+const { getGameById } = require('../modules/queries');
 
 /**
  * GET route template
@@ -11,53 +12,93 @@ router.get('/', rejectUnauthenticated, (req, res) => {
 
 });
 
+/*
+    GET a single game info (mostly for testing)
+*/
+router.get('/info/:gameId', rejectUnauthenticated, async (req, res) => {
+    try {
+        const thisGame = await getGameById(req.params.gameId);
+        res.send(thisGame);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(400);
+    }
+})
+
 /**
  * POST route template
  */
 router.post('/join', rejectUnauthenticated, async (req, res) => {
     // POST route code here
-    const addPlayerToGame = `insert into players (user_id, game_id)
-    values ($1, $2)`;
-    const addPlayerRounds = `insert into rounds_players ("round_id","player_id")
-    values ($1,$2)`;
-    // join data needs to have the game_id and the round_id upon pressing the join button
-    const joinData = req.body;
-
+    const addPlayerToGame = `insert into players (user_id, game_id) values ($1, $2)`;
     try {
-        pool.query(addPlayerToGame, [req.user.id, joinData.game_id])
-        pool.query(addPlayerRounds, [joinData.round_id, req.user.id])
+        await pool.query(addPlayerToGame, [req.user.id, req.body.game_id])
+        res.sendStatus(200);
+    } catch (error) {
+        // TODO: Do we care about telling the frontend that there is a specific 
+        // error when the user joins a game they're already in? Maybe not
+        console.log(error)
+        res.sendStatus(400);
+    }
+
+});
+
+router.post('/leave', rejectUnauthenticated, async (req, res) => {
+    // POST route code here
+    const leaveGame = `delete from players where user_id = $1`;
+    try {
+        pool.query(leaveGame, [req.user.id])
         res.sendStatus(200);
     } catch (error) {
         console.log(error)
+        res.sendStatus(400);
     }
+
 });
 
-router.post('/create', rejectUnauthenticated, async (req, res) => {
+// create a new game, if ?testGame=true, dice will not be randomized
+router.post('/create/', rejectUnauthenticated, async (req, res) => {
+    // testGame=true
+    const testGame = req.query.testGame || false;
+
+
     // POST route code here
-    const createGame = `insert into games (owner_id, lobby_name)
-    values ($1, $2)`;
-    const createRounds = `insert into rounds (round_number, game_id)
-    values (0, (select id from games where owner_id=$1 order by id desc limit 1));`;
-    const createPlayers = `insert into players (user_id, game_id)
-    values ($1, (select id from games where owner_id=$1 order by id desc limit 1))`;
-    const createTurn = `insert into rounds_players ("round_id","player_id")
-    values ((select id from rounds where game_id=(select id from games where owner_id=$1 order by id desc limit 1) order by id desc limit 1) , 1)`;
-        // create data needs to have just the lobby name in it as well as a logged in user in order to create the game
-    const createData = req.body
+    const createGame = `insert into games (owner_id, lobby_name) values ($1, $2) RETURNING *`;
+    const createPlayers = `insert into players (user_id, game_id) values ($1, $2)`;
+
+    // create data needs to have just the lobby name in it as well as a logged in user in order to create the game
+    const lobbyName = req.body.lobby_name || `New Game ${Math.round(Math.random() * 10000)}`
 
     try {
         // make the game table
-        await pool.query(createGame, [req.user.id, createData.lobby_name]);
-        // make a round for the game in the rounds table
-        await pool.query(createRounds, [req.user.id]);
-        // make a player in the players table
-        await pool.query(createPlayers, [req.user.id]);
-        // give the player an opening turn in the rounds_players table
-        await pool.query(createTurn, [req.user.id]);
+        const result1 = await pool.query(createGame, [req.user.id, lobbyName]);
+        const gameId = result1.rows[0].id;
 
-        res.sendStatus(200);
+        // make a player in the players table
+        await pool.query(createPlayers, [req.user.id, gameId]);
+
+        // make a round for the game in the rounds table
+        // const createRounds = `insert into rounds (round_number, game_id) values (0, $1) RETURNING *;`;
+        // const result2 = await pool.query(createRounds, [gameId]);
+        // const roundId = result2.rows[0].id;
+
+        // give the player an opening turn in the rounds_players table
+        // const dice_values = [1, 5, 3, 6, 4, 6];
+        // if (!testGame) {
+        //     dice_values.length = 0;
+        //     for (let i=0; i<6; i++) {
+        //         // sets dice to 1-6 for a test game, or randomizes 1-6
+        //         dice_values.push(Math.ceil(Math.random() * 6))
+        //     }
+        // }
+        // const createTurn = `insert into rounds_players 
+        // ("round_id","player_id","d1_val","d2_val","d3_val","d4_val","d5_val","d6_val") values ($1, $2, $3, $4, $5, $6, $7, $8)`;
+        // await pool.query(createTurn, [roundId, req.user.id, ...dice_values]);
+
+        res.send(result1.rows[0]);
     } catch (error) {
         console.log(error);
+        res.sendStatus(500);
     }
 });
 

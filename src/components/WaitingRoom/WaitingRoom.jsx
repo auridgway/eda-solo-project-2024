@@ -11,9 +11,9 @@ export default function WaitingRoom() {
     const games = useSelector(store => store.games);
     const user = useSelector(store => store.user);
     const currentGame = (games?.filter((item) => item.id === Number(gameid)));
-
+    // const currentGame = (games?.find(item => item.id === Number(gameid)))
     function handleStart() {
-        const action = {type: 'START_GAME', payload: currentGame};
+        const action = {type: 'START_GAME', payload: gameid};
         dispatch(action);
         history.push(`/game/${gameid}`);
     }
