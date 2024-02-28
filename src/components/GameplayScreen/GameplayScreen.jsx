@@ -10,7 +10,7 @@ function getCurrentTurn(thisGame) {
     const roundsArray = thisGame.rounds;
     const currentRound = roundsArray[0];
     const turnsArray = currentRound.rounds_players;
-    const currentTurn = turnsArray.find((rp) => rp.player_id === currentPlayer);
+    const currentTurn = turnsArray.find((rp) => rp.player_id === currentPlayer.user_id);
     return currentTurn;
 }
 
@@ -24,14 +24,29 @@ export default function GameplayScreen() {
     const dice = useSelector(store => store.dice)
 
     const currentGame = games.find(game => game.id === Number(gameid));
+    let currentTurn = {};
+    console.log(currentGame);
 
-    if (currentGame === undefined || games.length <= 0) {
+    useEffect(() => {
+        const action = {
+            type: 'SET_DICE', payload: [
+                { value: currentTurn.d1_val, locked: currentTurn.d1_locked, scored: currentTurn.d1_scored },
+                { value: currentTurn.d2_val, locked: currentTurn.d2_locked, scored: currentTurn.d2_scored },
+                { value: currentTurn.d3_val, locked: currentTurn.d3_locked, scored: currentTurn.d3_scored },
+                { value: currentTurn.d4_val, locked: currentTurn.d4_locked, scored: currentTurn.d4_scored },
+                { value: currentTurn.d5_val, locked: currentTurn.d5_locked, scored: currentTurn.d5_scored },
+                { value: currentTurn.d6_val, locked: currentTurn.d6_locked, scored: currentTurn.d6_scored }]
+        }
+        dispatch(action);
+    }, [currentGame])
+
+    if (currentGame === undefined || games.length <= 0 || currentGame.rounds[0] === undefined) {
         return <h1>Loading...</h1>
+    } else {
+        currentTurn = getCurrentTurn(currentGame);
     }
-
-    const currentTurn = getCurrentTurn(currentGame);
-
     function handleRoll() {
+        console.log(dice);
         if (currentGame.roundNumber === 0) {
             alert('invalid roll');
         } else {
@@ -54,8 +69,9 @@ export default function GameplayScreen() {
                 <p>{currentGame?.id}</p>
                 <div>
                     <div>
-                        <p>current turn:{currentGame?.current_turn}</p>
-                        <p>current score:{currentTurn?.current_score}</p>
+                        <p>current turn:{currentGame.current_turn}</p>
+                        <p>current score:{currentTurn.current_score}</p>
+                        <p>turn score: {currentTurn.turn_score ? currentTurn.turn_score : 0}</p>
                         <DiceComponents gameId={gameid} games={games} />
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}

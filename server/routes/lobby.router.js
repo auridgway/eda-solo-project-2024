@@ -51,7 +51,7 @@ router.post('/create/', rejectUnauthenticated, async (req, res) => {
     const testGame = req.query.testGame || false;
 
     // POST route code here
-    const createGame = `insert into games (owner_id, lobby_name) values ($1, $2) RETURNING *`;
+    const createGame = `insert into games (owner_id, lobby_name, current_turn) values ($1, $2, $1) RETURNING *`;
     const createPlayers = `insert into players (user_id, game_id) values ($1, $2)`;
 
     // create data needs to have just the lobby name in it as well as a logged in user in order to create the game
@@ -60,10 +60,12 @@ router.post('/create/', rejectUnauthenticated, async (req, res) => {
     try {
         // make the game table
         const result1 = await pool.query(createGame, [req.user.id, lobbyName]);
+        console.log('game created')
         const gameId = result1.rows[0].id;
 
         // make a player in the players table
         await pool.query(createPlayers, [req.user.id, gameId]);
+        console.log('players added into game')
 
         res.send(result1.rows[0]);
     } catch (error) {

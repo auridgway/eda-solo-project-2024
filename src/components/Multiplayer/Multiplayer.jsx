@@ -9,10 +9,10 @@ export default function Multiplayer() {
 
     function handleJoin(gameId) {
 
-        const selectedGame = games.filter((game)=>game.id === Number(gameId));
-        const roundId = selectedGame[0].rounds[selectedGame[0].rounds.length-1].id
+        const selectedGame = games.find((game)=>game.id === Number(gameId));
+        console.log(selectedGame)
 
-        const action = { type: 'JOIN_GAME', payload: { game_id: gameId, round_id: roundId } }
+        const action = { type: 'JOIN_GAME', payload: { game_id: gameId } }
         dispatch(action);
         history.push(`/waiting/${gameId}`);
     }

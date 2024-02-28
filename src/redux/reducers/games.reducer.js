@@ -21,7 +21,9 @@ const gamesReducer = (state = [], action) => {
         currentGame.rounds[0].rounds_players.find((rp) => rp.player_id === currentPlayer.user_id)[propScored] = diceChecked[i].scored;
       }
 
-      currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].current_score += score;
+      // currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].current_score = score;
+      currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].turn_score = score;
+
       currentGameState[(currentGameState.findIndex(game => game.id === currentGame.id))] = currentGame;
 
       return currentGameState;

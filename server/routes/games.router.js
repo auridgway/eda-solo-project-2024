@@ -15,7 +15,7 @@ router.get('/user', rejectUnauthenticated, async (req, res) => {
 router.put('/start/:gameId', rejectUnauthenticated, async (req, res) => {
   const testGame = req.query.testGame || false;
   // const gameId = req.body[0].id;
-  const gameId = req.params.gameId;
+  const gameId = Number(req.params.gameId);
 
   try {
     const updatedGame = await createNewTurnByGameId(gameId, testGame);
@@ -29,6 +29,8 @@ router.put('/start/:gameId', rejectUnauthenticated, async (req, res) => {
 // rolls current turn
 router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
   const isBanked = req.query.bank || false; // ?bank=true or ?bank=false (default)
+  console.log(req.query);
+  console.log(isBanked);
   const gameId = Number(req.params.gameid);
   const dice = req.body; // [{value: 1, locked: true,}]
 
@@ -82,6 +84,7 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
 
     // STEP 4: UPDATE THE DATABASE WITH THE SCORE, NEW DICE VALUES AND STATUS
     if (!isBanked) {
+      console.log(`--> Player is not banking`)
       // only save re-rolled dice is we're not banking the score
       for (let i = 0; i < 6; i++) {
         const propVal = `d${i + 1}_val`;
@@ -97,7 +100,8 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
         scoredAll = true;
       }
       // we see if they've farkled based on the dice they lock in/roll and if so then we apply that here
-      if (checkMelds(diceValues, true) === 0 && scoredAll === false) {
+      const meldCheck = checkMelds(diceValues, true);
+      if (meldCheck === 0 && scoredAll === false) {
         myTurn.farkle = true;
         myTurn.has_played = true;
         myTurn.current_score = 0;
@@ -117,6 +121,7 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
     } else {
       // player banked the rolls, so lets move on
       // set the score, set the has_played
+      console.log(`--> Player is banking`)
       myTurn.current_score = lastScore + lockedScore;
       console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
       myTurn.has_played = true;
@@ -184,14 +189,14 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
         const selectPlayersResult = await pool.query(sql, [gameId]);
         const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)[0]
-
+        // TODO: Fix next player
         const nextPlayerResult = await pool.query(sql4, [nextPlayer.id, gameId]);
       }
     }
 
     const finalUpdatedGame = await getGameById(gameId);
     const finalTurn = finalUpdatedGame.rounds[0].rounds_players;
-    if (!finalTurn.some(rp => rp.has_played === false)) {
+    if (finalTurn.some(rp => rp.has_played === false)) {
       // still have people to play
     } else {
       // everyone has played
