@@ -191,7 +191,7 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
 
     const finalUpdatedGame = await getGameById(gameId);
     const finalTurn = finalUpdatedGame.rounds[0].rounds_players;
-    if (finalTurn.some(rp => rp.has_played === false)) {
+    if (!finalTurn.some(rp => rp.has_played === false)) {
       // still have people to play
     } else {
       // everyone has played

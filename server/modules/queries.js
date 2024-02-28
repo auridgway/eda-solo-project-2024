@@ -69,9 +69,8 @@ async function createNewTurnByGameId(gameId, testGame = false) {
     // make a round for the game in the rounds table
     const grabLastRound = `select * from rounds where game_id=$1 order by id desc`;
     const lastRound = await pool.query(grabLastRound, [gameId]);
-
-    const createRounds = `insert into rounds (round_number, game_id) values (1, $1) RETURNING *;`;
-    const result2 = await pool.query(createRounds, [gameId]);
+    const createRounds = `insert into rounds (round_number, game_id) values ($2, $1) RETURNING *;`;
+    const result2 = await pool.query(createRounds, [gameId, lastRound.rows[0] === undefined ? 1 : lastRound.rows[0].round_number + 1]);
     const roundId = result2.rows[0].id;
 
     const result3 = `SELECT * FROM "players" WHERE "game_id"=$1`;
@@ -91,7 +90,7 @@ async function createNewTurnByGameId(gameId, testGame = false) {
     insert into rounds_players 
     ("rolls","round_id","player_id","d1_val","d2_val","d3_val","d4_val","d5_val","d6_val") 
     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`;
-      await pool.query(createTurn, [lastRound.rows[0].round_number + 1, roundId, player.user_id, ...dice_values]);
+      await pool.query(createTurn, [1, roundId, player.user_id, ...dice_values]);
     }
     // Send back the current game but in a nice pretty format
     const finalResult = await getGameById(gameId);

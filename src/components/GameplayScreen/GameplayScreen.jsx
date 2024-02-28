@@ -4,6 +4,16 @@ import DiceComponents from "../DiceComponent/DiceComponent"
 import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min"
 import { useMemo } from "react"
 
+function getCurrentTurn(thisGame) {
+    const players = thisGame.players;
+    const currentPlayer = players.find((player) => player.user_id === thisGame.current_turn);
+    const roundsArray = thisGame.rounds;
+    const currentRound = roundsArray[0];
+    const turnsArray = currentRound.rounds_players;
+    const currentTurn = turnsArray.find((rp) => rp.player_id === currentPlayer);
+    return currentTurn;
+}
+
 export default function GameplayScreen() {
     // for gameplay screen the state we will need will include, the current score, and the dice to see if they are locked and 
     // their values
@@ -11,32 +21,21 @@ export default function GameplayScreen() {
     const dispatch = useDispatch();
     const history = useHistory();
     const games = useSelector(store => store.games)
-    const [currentGame, setCurrentGame] = useState([]);
-    const [currentTurns, setCurrentTurn] = useState([]);
+    const dice = useSelector(store => store.dice)
 
-    useEffect(() => {
-        setCurrentGame(games?.filter((item) => item.id === Number(gameid))[0])
-        setCurrentTurn(drill());
-    }, [JSON.stringify(games)])
+    const currentGame = games.find(game => game.id === Number(gameid));
 
-
-    function drill() {
-        if (games.length <= 0) {
-            return [];
-        } else {
-            let roundsArray = games[games.findIndex((item) => item.id === Number(gameid))].rounds;
-            let currentRound = roundsArray[roundsArray.length - 1];
-            let turnsArray = currentRound.rounds_players;
-            let currentTurn = turnsArray[turnsArray.length - 1];
-            return currentTurn;
-        }
+    if (currentGame === undefined || games.length <= 0) {
+        return <h1>Loading...</h1>
     }
+
+    const currentTurn = getCurrentTurn(currentGame);
 
     function handleRoll() {
         if (currentGame.roundNumber === 0) {
             alert('invalid roll');
         } else {
-            const action = { type: 'ROLL_DICE', payload: currentGame }
+            const action = { type: 'ROLL_DICE', payload: { game_id: Number(gameid), dice: dice } }
             dispatch(action);
         }
     }
@@ -44,7 +43,7 @@ export default function GameplayScreen() {
         if (currentGame.roundNumber === 0) {
             alert('invalid save');
         } else {
-            const action = { type: 'SAVE_SCORE', payload: currentGame }
+            const action = { type: 'SAVE_SCORE', payload: { game_id: Number(gameid), dice: dice } }
             dispatch(action);
         }
     }
@@ -55,8 +54,8 @@ export default function GameplayScreen() {
                 <p>{currentGame?.id}</p>
                 <div>
                     <div>
-                        <p>current turn:{'' && currentGame?.players[currentGame?.players?.findIndex((player) => player.id === currentTurns.player_id)]?.username}</p>
-                        <p>current score:{currentTurns?.current_score}</p>
+                        <p>current turn:{currentGame?.current_turn}</p>
+                        <p>current score:{currentTurn?.current_score}</p>
                         <DiceComponents gameId={gameid} games={games} />
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</button>}
                         {currentGame?.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</button>}

@@ -7,17 +7,17 @@ function* fetchGamesSaga(action) {
 }
 
 function* adjustDiceSaga(action) {
-    const response = yield axios.post(`/api/games/lock/`, action.payload.updateDiceState);
+    const response = yield axios.post(`/api/games/lock/`, action.payload.tempDice);
     yield put({ type: 'SET_LOCKED_DICE', payload: { response, currentGame: action.payload.currentGame } })
 }
 
 function* rollDiceSaga(action) {
-    yield axios.post(`/api/games/roll/`, action.payload);
+    yield axios.post(`/api/games/roll/${action.payload.game_id}`, action.payload.dice);
     yield put({ type: 'FETCH_GAMES' });
 }
 
 function* saveScoreSaga(action) {
-    yield axios.post(`/api/games/save/${action.payload.gameId}`, action.payload.gameState);
+    yield axios.post(`/api/games/roll/${action.payload.game_id}?bank=true`, action.payload.dice);
     yield put({ type: 'FETCH_GAMES' });
 }
 
@@ -28,6 +28,11 @@ function* startGameSaga(action) {
 
 function* joinGameSaga(action) {
     yield axios.post(`/api/lobby/join`, action.payload);
+    yield put({ type: 'FETCH_GAMES' });
+}
+
+function* leaveGameSaga(action) {
+    yield axios.delete(`/api/lobby/leave`, action.payload);
     yield put({ type: 'FETCH_GAMES' });
 }
 
@@ -44,6 +49,8 @@ function* gamesSaga() {
     yield takeEvery('CREATE_GAME', createGameSaga)
     yield takeEvery('SAVE_SCORE', saveScoreSaga)
     yield takeEvery('START_GAME', startGameSaga)
+    yield takeEvery('LEAVE_GAME', leaveGameSaga)
+
 }
 
 export default gamesSaga;
