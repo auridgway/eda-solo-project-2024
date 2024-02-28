@@ -7,6 +7,9 @@ import store from './redux/store';
 import App from './components/App/App';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from "@mui/material/CssBaseline";
+import '@fontsource-variable/nunito';
+
+
 
 const themeOption = {
   palette: {
@@ -31,6 +34,18 @@ const themeOption = {
       main: '#7A8450',
     },
   },
+  typography: {
+    fontFamily: 'Nunito Variable',
+  },
+  overrides: {
+    MuiCssBaseline: {
+      '@global': {
+        '@font-face': 'Nunito Variable',
+      },
+    },
+  },
+
+
 }
 const theme = createTheme(themeOption);
 

@@ -1,6 +1,12 @@
-import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min"
+import { Container } from "@mui/material";
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+
+
 
 function getCurrentTurn(thisGame) {
     const players = thisGame.players;
@@ -53,16 +59,28 @@ export default function DashboardScreen() {
     }
 
     return (
-        <>
-            <pre>in the dashboard</pre>
-            {usersGames?.map((item, i) =>
-                <div key={i}>
-                    <h3>{item.lobby_name}</h3>
-                    <p>{item.players.length}/8</p>
-                    <p>Current game status:{item.status}</p>
-                    {item.status === 'inprogress' ? <button data-gameid={item.id} onClick={handleResume}>Resume Game</button> : <button data-gameid={item.id} onClick={handleLobby}>Back to Lobby</button>}
 
-                </div>)}
-        </>
+        <Container>
+            <Typography color='primary' variant="h3">Dashboard</Typography>
+            {usersGames?.map((item, i) =>
+                <Paper sx={{ p: 1, m: 1 }} key={i}>
+                    <Grid alignItems="center" justifyContent="center" container spacing={2}>
+                        <Grid item xs={3} textAlign="center">
+                            <Typography variant="h5">{item.lobby_name}</Typography>
+                        </Grid>
+                        <Grid item xs={3} textAlign="center">
+                            <Typography>Players: </Typography><Typography variant="body1" fontWeight={700}>{item.players.length}/8</Typography>
+                        </Grid>
+                        <Grid item xs={3} textAlign="center">
+                            <Typography variant="body2">Current game status: </Typography><Typography variant="body1" fontWeight={700}>{item.status}</Typography>
+                        </Grid>
+                        <Grid item xs={3} textAlign="center">
+                            {item.status === 'inprogress' ? <Button variant="contained" data-gameid={item.id} onClick={handleResume}>Resume Game</Button> : <Button variant="outlined" data-gameid={item.id} onClick={handleLobby}>Back to Lobby</Button>}
+                        </Grid>
+                    </Grid>
+                </Paper>
+            )}
+        </Container>
+
     )
 }

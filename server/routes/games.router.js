@@ -109,7 +109,7 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
         console.log(`Sorry, you farkled. Score of ${lockedScore} lost`);
       } else if (scoredAll === true) {
         scoredAll = false;
-
+        // STRETCH: Add unlock for all dice scored
 
         myTurn.current_score = lastScore + lockedScore;
         console.log(`Score of ${lockedScore} saved due to lucky roll (no farkle)`);
@@ -188,9 +188,11 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       } else {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
         const selectPlayersResult = await pool.query(sql, [gameId]);
-        const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)[0]
-        // TODO: Fix next player
-        const nextPlayerResult = await pool.query(sql4, [nextPlayer.id, gameId]);
+        const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)
+
+        if (!nextPlayer.length === 0) {
+          const nextPlayerResult = await pool.query(sql4, [nextPlayer[0].id, gameId]);
+        }
       }
     }
 
