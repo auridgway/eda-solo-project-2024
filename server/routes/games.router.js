@@ -283,6 +283,7 @@ function checkMelds(diceValues, checkUnScored = false) {
     }
   }
   //FIVE LOCKED DICE
+  // TODO: if you have 4 6's and a 5 it will count out to 650 score
   else if (currentDice.length === 5) {
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
       return 2000;

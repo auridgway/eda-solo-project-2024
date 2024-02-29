@@ -1,9 +1,6 @@
 import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
+import Grid from "@mui/material/Unstable_Grid2";
 
 function getCurrentTurn(thisGame, dispatch) {
     const players = thisGame.players;
