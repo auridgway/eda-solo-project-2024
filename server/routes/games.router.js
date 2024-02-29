@@ -174,23 +174,26 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       // we have either farkled OR banked, either way we're done
       // record score, see if we won
       // ALSO: update this game's current player's turn id
-      const sql3 = `update games set status = $1, winner_id = $2 where id=$3 returning *`;
+      const sql3 = `update "games" set "status" = 'completed', "winner_id" = $1 where "id"=$2 returning *`;
       const sql2 = `update players set score = score + $1 where user_id = $2 and game_id=$3 returning *;`;
-      const sql = `select player_id, has_played from rounds_players where round_id = $1`;
+      const sql = `select * from rounds_players where round_id = $1 and has_played = false`;
       const sql4 = `update games set current_turn = $1 where id=$2 returning *`
       // update score
       const updatedScoreResult = await pool.query(sql2, [myTurn.current_score, myTurn.player_id, gameId])
       // check for if win game
       if (updatedScoreResult.rows[0].score >= 10000) {
-        // if win, win game
-        const gameWinResult = await pool.query(sql3, ['completed', myTurn.player_id, gameId]);
+        // if win, win game - only partially updates db with player_id, even with hardcoded 'completed in there'
+        const gameWinResult = await pool.query(sql3, [myTurn.player_id, gameId]);
+        console.log(myTurn.player_id)
+        console.log(gameId)
+        console.log(gameWinResult.rows)
       } else {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
-        const selectPlayersResult = await pool.query(sql, [gameId]);
+        const selectPlayersResult = await pool.query(sql, [myTurn.round_id]);
         const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)
-
-        if (!nextPlayer.length === 0) {
-          const nextPlayerResult = await pool.query(sql4, [nextPlayer[0].id, gameId]);
+        console.log(nextPlayer.length);
+        if (nextPlayer.length > 0) {
+          const nextPlayerResult = await pool.query(sql4, [nextPlayer[0].player_id, gameId]);
         }
       }
     }

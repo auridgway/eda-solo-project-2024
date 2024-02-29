@@ -14,6 +14,9 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom/cjs/react-router-dom.min';
+import Modal from '@mui/material/Modal';
+import NewGame from '../NewGame/NewGame'
+
 
 function Nav() {
   const user = useSelector((store) => store.user);
@@ -37,6 +40,9 @@ function Nav() {
     setAnchorElUser(null);
   };
 
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
 
@@ -97,9 +103,17 @@ function Nav() {
                 </MenuItem>
                 <MenuItem onClick={handleCloseNavMenu}>
                   <Typography onClick={() => {
-                    history.push('/create');
+                    handleOpen();
                     handleCloseNavMenu();
                   }} textAlign="center">New Game</Typography>
+                  <Modal
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                  >
+                    <NewGame open={open} setOpen={setOpen} />
+                  </Modal>
                 </MenuItem>
                 <MenuItem onClick={handleCloseNavMenu}>
                   <Typography onClick={() => {
@@ -140,13 +154,22 @@ function Nav() {
               </Button>
               <Button
                 onClick={() => {
-                  history.push('/create');
+                  handleOpen();
                   handleCloseNavMenu();
                 }}
+
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
                 New Game
               </Button>
+              <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+              >
+                <NewGame open={open} setOpen={setOpen} />
+              </Modal>
               <Button
                 onClick={() => {
                   history.push('/multiplayer');
@@ -190,7 +213,7 @@ function Nav() {
         </Toolbar>
       </Container >
     </AppBar >
-  
+
   )
 
   // return (

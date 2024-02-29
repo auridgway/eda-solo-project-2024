@@ -55,7 +55,7 @@ export default function DiceComponent(props) {
                     currentGame
                 }
             }
-            dispatch(action);
+            dispatch(action);1
         } else {
             alert('Cannot unlock already scored dice!');
         }

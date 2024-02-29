@@ -32,7 +32,7 @@ function* joinGameSaga(action) {
 }
 
 function* leaveGameSaga(action) {
-    yield axios.delete(`/api/lobby/leave`, action.payload);
+    yield axios.delete(`/api/lobby/leave/${action.payload}`);
     yield put({ type: 'FETCH_GAMES' });
 }
 
