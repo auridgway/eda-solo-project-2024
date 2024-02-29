@@ -23,12 +23,13 @@ function RegisterPage() {
       <AnimatePresence mode="wait">
         <AnimatedPaper sx={{ p: 5, m: 1 }}
           animate={{
-            scale: [0, 1],
-            rotate: [180, 0]
+            y: ['30vh', '0vh'],
+            opacity: [0, 1]
             
           }}
           transition={{
             duration: 1.5,
+            type: "spring"
           }}
           exit={{ 
             x: 100,
