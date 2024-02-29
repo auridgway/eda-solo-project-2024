@@ -5,7 +5,7 @@ import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min
 import { useMemo } from "react"
 
 import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';

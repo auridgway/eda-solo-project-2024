@@ -181,17 +181,16 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       // update score
       const updatedScoreResult = await pool.query(sql2, [myTurn.current_score, myTurn.player_id, gameId])
       // check for if win game
+      console.log(updatedScoreResult.rows[0])
       if (updatedScoreResult.rows[0].score >= 10000) {
         // if win, win game - only partially updates db with player_id, even with hardcoded 'completed in there'
         const gameWinResult = await pool.query(sql3, [myTurn.player_id, gameId]);
-        console.log(myTurn.player_id)
-        console.log(gameId)
-        console.log(gameWinResult.rows)
+        res.send(gameWinResult.rows[0]);
+        return;
       } else {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
         const selectPlayersResult = await pool.query(sql, [myTurn.round_id]);
         const nextPlayer = selectPlayersResult.rows.filter((player) => player.has_played === false)
-        console.log(nextPlayer.length);
         if (nextPlayer.length > 0) {
           const nextPlayerResult = await pool.query(sql4, [nextPlayer[0].player_id, gameId]);
         }
