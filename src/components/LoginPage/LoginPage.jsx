@@ -1,26 +1,45 @@
 import React from 'react';
 import LoginForm from '../LoginForm/LoginForm';
-import { useHistory } from 'react-router-dom';
+import { Container } from "@mui/material";
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
+import { motion, AnimatePresence } from "framer-motion";
 
 function LoginPage() {
-  const history = useHistory();
+
+  const AnimatedPaper = motion(Paper);
+
 
   return (
-    <div>
-      <LoginForm />
-
-      <center>
-        <button
-          type="button"
-          className="btn btn_asLink"
-          onClick={() => {
-            history.push('/registration');
-          }}
-        >
-          Register
-        </button>
-      </center>
-    </div>
+    <Container>
+      <Grid container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: '100vh' }}
+      >
+        <AnimatePresence>
+          <AnimatedPaper sx={{ p: 5, m: 1 }}
+            animate={{
+              scale: [0, 1],
+              rotate: [180, 0]
+              
+            }}
+            transition={{
+              duration: 1.5,
+            }}
+            exit={{ 
+              x: 100,
+              opacity: 0 
+            }}
+            key="login"
+          >
+            <LoginForm />
+          </AnimatedPaper>
+        </AnimatePresence>
+      </Grid>
+    </Container>
   );
 }
 

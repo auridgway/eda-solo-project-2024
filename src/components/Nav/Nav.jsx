@@ -10,9 +10,7 @@ import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom/cjs/react-router-dom.min';
@@ -41,8 +39,9 @@ function Nav() {
 
 
   return (
+
     <AppBar position="static">
-      <Container maxWidth="xl">
+      < Container maxWidth="xl" >
         <Toolbar disableGutters>
           <Typography
             variant="h6"
@@ -110,33 +109,6 @@ function Nav() {
                 </MenuItem>
               </Menu>
             )}
-            {!user.id && (
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'left',
-                }}
-                open={Boolean(anchorElNav)}
-                onClose={handleCloseNavMenu}
-                sx={{
-                  display: { xs: 'block', md: 'none' },
-                }}
-              >
-                <MenuItem onClick={handleCloseNavMenu}>
-                  <Typography onClick={() => {
-                    history.push('/login');
-                    handleCloseNavMenu();
-                  }} textAlign="center">Login / Register</Typography>
-                </MenuItem>
-              </Menu>
-            )}
           </Box>
           <Typography
             variant="h5"
@@ -186,23 +158,8 @@ function Nav() {
               </Button>
             </Box>
           )}
-          {!user.id && (
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-              <Button
-                onClick={() => {
-                  history.push('/login');
-                  handleCloseNavMenu();
-                }}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                Login / Register
-              </Button>
-            </Box>
-          )}
 
           <Box sx={{ flexGrow: 0 }}>
-            <Typography>Welcome: {user.username}</Typography>
-            <Typography>ID: {user.id}</Typography>
             <LogOutButton />
             <Menu
               sx={{ mt: '45px' }}
@@ -231,8 +188,9 @@ function Nav() {
             </Menu>
           </Box>
         </Toolbar>
-      </Container>
-    </AppBar>
+      </Container >
+    </AppBar >
+  
   )
 
   // return (

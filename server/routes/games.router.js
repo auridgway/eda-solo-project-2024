@@ -174,17 +174,16 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       // we have either farkled OR banked, either way we're done
       // record score, see if we won
       // ALSO: update this game's current player's turn id
-      const sql3 = `update games set status = $1, winner_id = $2, where id=$3 returning *`;
-      const sql2 = `update players set score = score + $1 where user_id = $2 returning *`;
+      const sql3 = `update games set status = $1, winner_id = $2 where id=$3 returning *`;
+      const sql2 = `update players set score = score + $1 where user_id = $2 and game_id=$3 returning *;`;
       const sql = `select player_id, has_played from rounds_players where round_id = $1`;
       const sql4 = `update games set current_turn = $1 where id=$2 returning *`
       // update score
-      const updatedScoreResult = await pool.query(sql2, [myTurn.current_score, myTurn.player_id])
+      const updatedScoreResult = await pool.query(sql2, [myTurn.current_score, myTurn.player_id, gameId])
       // check for if win game
-      if (updatedScoreResult.rows.score >= 10000) {
+      if (updatedScoreResult.rows[0].score >= 10000) {
         // if win, win game
         const gameWinResult = await pool.query(sql3, ['completed', myTurn.player_id, gameId]);
-        res.send(gameWinResult);
       } else {
         // select players, joined on rounds_players? then try to see whose turn it is next based on game
         const selectPlayersResult = await pool.query(sql, [gameId]);
@@ -251,19 +250,17 @@ function checkMelds(diceValues, checkUnScored = false) {
   // checks to see if we only have one current dice. if so we see if it equals 1 or 5 then return their meld values
   //ONE LOCKED DICE - will flow to bottom to be taken care of
   //TWO LOCKED DICE - will flow to bottom to be taken care of
-  //THREE LOCKED DICE
+  //THREE LOCKED DICE [1,1,4,4,4]
   if (currentDice.length === 3) {
+    console.log('dice at this thing',currentDice);
     if ((currentDice[0].value === currentDice[1].value) && (currentDice[1].value === currentDice[2].value)) {
-      return applyThreeScore(0, tempScore, currentDice);
+      return applyThreeScore(2, tempScore, currentDice);
     }
     //FOUR LOCKED DICE
   } else if (currentDice.length === 4) {
     // 4 of any number
     if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       return 1000;
-      // four of any number with pairs
-    } else if (currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value) {
-      return 1500;
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
       tempScore += applyThreeScore(1, tempScore, currentDice);
@@ -272,6 +269,7 @@ function checkMelds(diceValues, checkUnScored = false) {
       for (let i = 0; i < 3; i++) {
         currentDice.shift();
       }
+      console.log('dice after shift', currentDice)
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       tempScore += applyThreeScore(1, tempScore, currentDice);
@@ -279,6 +277,7 @@ function checkMelds(diceValues, checkUnScored = false) {
       for (let i = 0; i < 3; i++) {
         currentDice.pop();
       }
+
     }
   }
   //FIVE LOCKED DICE
@@ -288,24 +287,25 @@ function checkMelds(diceValues, checkUnScored = false) {
       // 4 of any number
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       tempScore += 1000;
-      // four of any number with pairs
-    } else if (currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value) {
-      tempScore += 1500;
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value) {
-      tempScore += applyThreeScore(0, tempScore, currentDice);
+      tempScore += applyThreeScore(2, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we shift the first three items since they all match eachother
       // will this break the bottom if statement because it will have some things that are undefined?
       for (let i = 0; i < 3; i++) {
         currentDice.shift();
       }
+      console.log('dice after shift', currentDice)
+
       // checks to see if we have a pair of 3 in a row as well as any 5's or 1's
     } else if (currentDice.length > 3 && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value) {
-      tempScore += applyThreeScore(1, tempScore, currentDice);
+      tempScore += applyThreeScore(2, tempScore, currentDice);
       // if any of these above match we don't want to add on additional points so we pop the last three items since they all match eachother
       for (let i = 0; i < 3; i++) {
         currentDice.pop();
       }
+      console.log('dice after pop', currentDice)
+
       // this checks for a middle three pair match
     } else if (currentDice.length > 3 && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value) {
       tempScore += applyThreeScore(2, tempScore, currentDice);
@@ -328,6 +328,7 @@ function checkMelds(diceValues, checkUnScored = false) {
       // two triplets
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5]) {
       return 2500;
+      // four in a row including a pair
     } else if (currentDice[0].value === currentDice[1].value && currentDice[1].value === currentDice[2].value && currentDice[2].value === currentDice[3].value && currentDice[4].value === currentDice[5].value || currentDice[0].value === currentDice[1].value && currentDice[2].value === currentDice[3].value && currentDice[3].value === currentDice[4].value && currentDice[4].value === currentDice[5].value) {
       return 1500;
       // here we see if there are three in a row anywhere then remove them from the current dice so they don't get scored again
@@ -368,6 +369,9 @@ function checkMelds(diceValues, checkUnScored = false) {
       // checks to see if we have four in a row and trims the array for scoring accordingly
     }
   }
+  console.log('score before final calculations', tempScore)
+
+  console.log('dice', currentDice);
   for (const dice of currentDice) {
     if (dice.value === 1) {
       tempScore += 100;
@@ -375,6 +379,7 @@ function checkMelds(diceValues, checkUnScored = false) {
       tempScore += 50;
     }
   }
+  console.log('score after calculations', tempScore)
   return tempScore;
 }
 // this function checks for x dice in a row out of 6 dice

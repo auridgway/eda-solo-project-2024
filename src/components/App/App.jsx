@@ -36,7 +36,8 @@ function App() {
   return (
     <Router>
       <div>
-        <Nav />
+        {!user.id ? <></> : <Nav />}
+
         <Switch>
           {/* Visiting localhost:5173 will redirect to localhost:5173/home */}
           <Redirect exact from="/" to="/home" />
@@ -49,7 +50,7 @@ function App() {
           >
             <Multiplayer />
           </ProtectedRoute>
-          
+
           {/* For protected routes, the view could show one of several things on the same route.
             Visiting localhost:5173/user will show the UserPage if the user is logged in.
             If the user is not logged in, the ProtectedRoute will show the LoginPage (component).

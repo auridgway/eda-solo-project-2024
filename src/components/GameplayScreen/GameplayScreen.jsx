@@ -82,203 +82,222 @@ export default function GameplayScreen() {
     return (
         <Container>
             <Typography color='primary' variant="h3">{currentGame?.lobby_name}</Typography>
-            <Grid container spacing={2} direction='row'>
-                <Grid item xs={8}>
-                    {/* actual game space is right here */}
-                    <Paper sx={{ p: 1, m: 1 }} >
-                        <Grid container direction='column' xs={12}>
+            {currentGame.winner_id === undefined ?
+                <Grid container spacing={2} direction='row'>
+                    <Grid item xs={8}>
+                        {/* actual game space is right here */}
+                        <Paper sx={{ p: 1, m: 1 }} >
+                            <Grid container direction='column' xs={12}>
+                                <Grid container spacing={2} direction='row'>
+                                    <Grid item xs={2}>
+                                        <Typography fontWeight={700}>Player's Turn:</Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                        <Typography >{currentPlayer}</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container spacing={2} direction='row'>
+                                    <Grid item xs={2}>
+                                        <Typography fontWeight={700}>Tracked Score:</Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                        <Typography >{currentScore}</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container spacing={2} direction='row'>
+                                    <Grid item xs={2}>
+                                        <Typography fontWeight={700}>Current Score:</Typography>
+                                    </Grid>
+                                    <Grid item xs={2}>
+                                        <Typography >{trackedScore}</Typography>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                            <Grid container direction='column'>
+                                <DiceComponent gameId={gameid} />
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" direction='row' spacing={2}>
+                                <Grid item textAlign='center' xs={6}>
+                                    <Button sx={{ px: 14 }} variant="contained" color='info' onClick={handleRoll}>Roll</Button>
+                                </Grid>
+                                <Grid item textAlign='center' xs={6}>
+                                    <Button sx={{ px: 11.5 }} variant="contained" color='success' onClick={handleSave}>Save Score</Button>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <Paper sx={{ p: 1, m: 1 }} >
+                            <Typography variant="h5" textAlign="center">Current Points</Typography>
                             <Grid container spacing={2} direction='row'>
-                                <Grid item xs={2}>
-                                    <Typography fontWeight={700}>Player's Turn:</Typography>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" fontWeight={700}>Player</Typography>
                                 </Grid>
-                                <Grid item xs={2}>
-                                    <Typography >{currentPlayer}</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container spacing={2} direction='row'>
-                                <Grid item xs={2}>
-                                    <Typography fontWeight={700}>Tracked Score:</Typography>
-                                </Grid>
-                                <Grid item xs={2}>
-                                    <Typography >{currentScore}</Typography>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" fontWeight={700}>Score</Typography>
                                 </Grid>
                             </Grid>
-                            <Grid container spacing={2} direction='row'>
-                                <Grid item xs={2}>
-                                    <Typography fontWeight={700}>Current Score:</Typography>
+                            {currentGame.players.map((player) =>
+                                <Grid container spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >{player.username}</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >{player.score}</Typography>
+                                    </Grid>
+                                </Grid>)}
+                        </Paper>
+                        <Paper sx={{ p: 1, m: 1 }} >
+                            <Typography variant="h5" textAlign="center">Scoring Rules</Typography>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" fontWeight={700}>Combination</Typography>
                                 </Grid>
-                                <Grid item xs={2}>
-                                    <Typography >{trackedScore}</Typography>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" fontWeight={700}>Reward</Typography>
                                 </Grid>
                             </Grid>
-                        </Grid>
-                        <Grid container direction='column'>
-                            <DiceComponent gameId={gameid} />
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" direction='row' spacing={2}>
-                            <Grid item textAlign='center' xs={6}>
-                                <Button sx={{px:14}} variant="contained" color='info' onClick={handleRoll}>Roll</Button>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Single 5</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >50 Points</Typography>
+                                </Grid>
                             </Grid>
-                            <Grid item textAlign='center' xs={6}>
-                                <Button sx={{px:11.5}} variant="contained" color='success' onClick={handleSave}>Save Score</Button>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Single 1</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >100 Points</Typography>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                    </Paper>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 1's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >300 Points</Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 2's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >200 Points</Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 3's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >300 Points</Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 4's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >400 Points</Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 5's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >500 Points</Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >Three 6's</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography textAlign="center" >600 Points</Typography>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >4 of Any Number</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >1000 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >5 of Any Number</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >2000 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >6 of Any Number</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >6000 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >1-6 Straight</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >1500 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >Three Pairs</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >1500 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >Four of Any Number with a Pair</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >1500 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >Two Triplets</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Typography textAlign="center" >2500 Points</Typography>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Grid>
                 </Grid>
-                <Grid item xs={4}>
-                    <Paper sx={{ p: 1, m: 1 }} >
-                        <Typography variant="h5" textAlign="center">Current Points</Typography>
-                        <Grid container spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" fontWeight={700}>Player</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" fontWeight={700}>Score</Typography>
-                            </Grid>
-                        </Grid>
-                        {currentGame.players.map((player) =>
-                            <Grid container spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >{player.username}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >{player.score}</Typography>
-                                </Grid>
-                            </Grid>)}
-                    </Paper>
-                    <Paper sx={{ p: 1, m: 1 }} >
-                        <Typography variant="h5" textAlign="center">Scoring Rules</Typography>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" fontWeight={700}>Combination</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" fontWeight={700}>Reward</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Single 5</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >50 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Single 1</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >100 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 1's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >300 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 2's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >200 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 3's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >300 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 4's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >400 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 5's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >500 Points</Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >Three 6's</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography textAlign="center" >600 Points</Typography>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >4 of Any Number</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >1000 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >5 of Any Number</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >2000 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >6 of Any Number</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >6000 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >1-6 Straight</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >1500 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >Three Pairs</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >1500 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >Four of Any Number with a Pair</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >1500 Points</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >Two Triplets</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography textAlign="center" >2500 Points</Typography>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    </Paper>
+                :
+                <Grid container spacing={2} direction='row'>
+                    <Grid item xs={3}>
+
+                    </Grid>
+                    <Grid item xs={6}>
+                        {/* actual game space is right here */}
+                        <Paper sx={{ p: 1, m: 1 }} >
+                            <Typography textAlign='center' variant="h3">Winner!</Typography>
+                            <Typography textAlign='center' variant="h5">👑 {currentGame.players.find((player) => player.user_id===currentGame.winner_id).username} 👑</Typography>
+                            <Typography textAlign='center' variant="h5">Score: {currentGame.players.find((player) => player.user_id===currentGame.winner_id).score} points</Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={3}>
+
+                    </Grid>
                 </Grid>
-            </Grid>
+            }
         </Container>
 
 
