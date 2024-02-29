@@ -52,9 +52,7 @@ function Nav() {
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
+              fontWeight: 900,
               color: 'inherit',
               textDecoration: 'none',
             }}
@@ -149,9 +147,7 @@ function Nav() {
               mr: 2,
               display: { xs: 'flex', md: 'none' },
               flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
+              fontWeight: 900,
               color: 'inherit',
               textDecoration: 'none',
             }}

@@ -42,15 +42,6 @@ export default function NewGame() {
                     </Grid>
                 </Grid>
             </Paper>
-
         </Container>
-        // <>
-        //     <div>
-        //         <h3>Create New Game</h3>
-        //         <button onClick={() => history.push('/home')}>return to home</button>
-        //         <button onClick={handleCreate}>create game</button>
-
-        //     </div>
-        // </>
     )
 }

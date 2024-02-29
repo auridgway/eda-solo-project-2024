@@ -1,5 +1,9 @@
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
 function getCurrentTurn(thisGame, dispatch) {
     const players = thisGame.players;
@@ -60,11 +64,13 @@ export default function DiceComponent(props) {
     // let server check for farkles
     return (
         <>
-            {diceInfo?.map((item, i) =>
-                <div key={i}>
-                    <p onClick={() => handleClick(i)}>{item.locked === false ? '🔓' : '🔒'}</p>
-                    <p>{item.value}</p>
-                </div>)}
+            <Grid container spacing={2} alignItems="center" justifyContent="center" direction='row'>
+                {diceInfo?.map((item, i) =>
+                    <Grid textAlign='center' item xs={4} key={i}>
+                        <Typography fontSize={'200%'} onClick={() => handleClick(i)}>{item.locked === false ? '🔓' : '🔒'}</Typography>
+                        <Typography fontSize={'200%'} >{item.value}</Typography>
+                    </Grid>)}
+            </Grid>
         </>
     )
 }
