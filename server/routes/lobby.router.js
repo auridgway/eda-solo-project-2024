@@ -33,10 +33,12 @@ router.post('/join', rejectUnauthenticated, async (req, res) => {
 
 });
 
-router.delete('/leave', rejectUnauthenticated, async (req, res) => {
-    const leaveGame = `delete from players where user_id = $1, game_id = $2`;
+router.delete('/leave/:gameid', rejectUnauthenticated, async (req, res) => {
+    const leaveGame = `delete from players where user_id = $1 and game_id = $2`;
+    
     try {
-        pool.query(leaveGame, [req.user.id, req.body.game_id])
+        const result = pool.query(leaveGame, [req.user.id, Number(req.params.gameid)]);
+        console.log('deleting user ',req.user.id, ' from game ',Number(req.params.gameid))
         res.sendStatus(200);
     } catch (error) {
         console.log(error)

@@ -5,13 +5,14 @@ import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min
 import { useMemo } from "react"
 
 import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import DiceComponent from "../DiceComponent/DiceComponent"
 import LinearProgress from '@mui/material/LinearProgress';
+import Divider from '@mui/material/Divider';
 
 
 function getCurrentTurn(thisGame) {
@@ -53,6 +54,15 @@ export default function GameplayScreen() {
         }
         dispatch(action);
     }, [currentGame])
+    // TODO:
+    // when live if you lock in dice it will refresh deleting your turn
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch({ type: 'FETCH_GAMES' })
+        }, 5000);
+        return () => clearInterval(interval);
+    });
 
     if (currentGame === undefined || games.length <= 0 || currentGame.rounds[0] === undefined) {
         return <LinearProgress color="secondary" />
@@ -82,47 +92,48 @@ export default function GameplayScreen() {
 
     return (
         <Container>
-            <Typography color='primary' variant="h3">{currentGame?.lobby_name}</Typography>
-            {currentGame.status !== 'complete' ?
+            <Typography color='primary' sx={{my:3}} variant="h2">{currentGame?.lobby_name}</Typography>
+            {currentGame.status !== 'completed' ?
                 <Grid container spacing={2} direction='row'>
                     <Grid item xs={8}>
                         {/* actual game space is right here */}
                         <Paper sx={{ p: 1, m: 1 }} >
-                            <Grid container direction='column'>
-                                <Grid container spacing={2} direction='row'>
-                                    <Grid item xs={2}>
-                                        <Typography fontWeight={700}>Player's Turn:</Typography>
+                            <Grid container alignItems="center" justifyContent="center" direction='row'>
+                                <Grid spacing={2} xs={4} alignItems="center" justifyContent="center" direction='row'>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' fontWeight={700}>Player's Turn:</Typography>
                                     </Grid>
-                                    <Grid item xs={2}>
-                                        <Typography >{currentPlayer}</Typography>
-                                    </Grid>
-                                </Grid>
-                                <Grid container spacing={2} direction='row'>
-                                    <Grid item xs={2}>
-                                        <Typography fontWeight={700}>Tracked Score:</Typography>
-                                    </Grid>
-                                    <Grid item xs={2}>
-                                        <Typography >{currentScore}</Typography>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' >{currentPlayer}</Typography>
                                     </Grid>
                                 </Grid>
-                                <Grid container spacing={2} direction='row'>
-                                    <Grid item xs={2}>
-                                        <Typography fontWeight={700}>Current Score:</Typography>
+                                <Grid spacing={2} xs={4} alignItems="center" justifyContent="center" direction='row'>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' fontWeight={700}>Tracked Score:</Typography>
                                     </Grid>
-                                    <Grid item xs={2}>
-                                        <Typography >{trackedScore}</Typography>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' >{currentScore}</Typography>
+                                    </Grid>
+                                </Grid>
+                                <Grid spacing={2} xs={4} alignItems="center" justifyContent="center" direction='row'>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' fontWeight={700}>Current Score:</Typography>
+                                    </Grid>
+                                    <Grid item >
+                                        <Typography variant="h5" textAlign='center' >{trackedScore}</Typography>
                                     </Grid>
                                 </Grid>
                             </Grid>
+                            <Divider sx={{ my: 2 }} />
                             <Grid container direction='column'>
                                 <DiceComponent gameId={gameid} />
                             </Grid>
                             <Grid container alignItems="center" justifyContent="center" direction='row' spacing={2}>
                                 <Grid item textAlign='center' xs={6}>
-                                    {currentGame.current_turn===user.id?<Button sx={{ px: 14 }} variant="contained" color='info' onClick={handleRoll}>Roll</Button>:''}
+                                    {currentGame.current_turn === user.id ? <Button sx={{ px: 14 }} variant="contained" color='info' onClick={handleRoll}>Roll</Button> : ''}
                                 </Grid>
                                 <Grid item textAlign='center' xs={6}>
-                                {currentGame.current_turn===user.id?<Button sx={{ px: 11.5 }} variant="contained" color='success' onClick={handleSave}>Save Score</Button>:''}
+                                    {currentGame.current_turn === user.id ? <Button sx={{ px: 11.5 }} variant="contained" color='success' onClick={handleSave}>Save Score</Button> : ''}
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -132,19 +143,19 @@ export default function GameplayScreen() {
                             <Typography variant="h5" textAlign="center">Current Points</Typography>
                             <Grid container spacing={2} direction='row'>
                                 <Grid item xs={6}>
-                                    <Typography textAlign="center" fontWeight={700}>Player</Typography>
+                                    <Typography variant="h6" textAlign="center" fontWeight={700}>Player</Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <Typography textAlign="center" fontWeight={700}>Score</Typography>
+                                    <Typography variant="h6" textAlign="center" fontWeight={700}>Score</Typography>
                                 </Grid>
                             </Grid>
                             {currentGame.players.map((player) =>
                                 <Grid container spacing={2} direction='row'>
                                     <Grid item xs={6}>
-                                        <Typography textAlign="center" >{player.username}</Typography>
+                                        <Typography variant="h6" textAlign="center" >{player.username}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography textAlign="center" >{player.score}</Typography>
+                                        <Typography variant="h6" textAlign="center" >{player.score}</Typography>
                                     </Grid>
                                 </Grid>)}
                         </Paper>
@@ -290,8 +301,8 @@ export default function GameplayScreen() {
                         {/* actual game space is right here */}
                         <Paper sx={{ p: 1, m: 1 }} >
                             <Typography textAlign='center' variant="h3">Winner!</Typography>
-                            <Typography textAlign='center' variant="h5">👑 {currentGame.players.find((player) => player.user_id===currentGame.winner_id).username} 👑</Typography>
-                            <Typography textAlign='center' variant="h5">Score: {currentGame.players.find((player) => player.user_id===currentGame.winner_id).score} points</Typography>
+                            <Typography textAlign='center' variant="h5">👑 {currentGame.players.find((player) => player.user_id === currentGame.winner_id).username} 👑</Typography>
+                            <Typography textAlign='center' variant="h5">Score: {currentGame.players.find((player) => player.user_id === currentGame.winner_id).score} points</Typography>
                         </Paper>
                     </Grid>
                     <Grid item xs={3}>

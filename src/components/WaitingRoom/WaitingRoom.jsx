@@ -23,6 +23,12 @@ export default function WaitingRoom() {
         history.push(`/game/${gameid}`);
     }
 
+    function handleLeave() {
+        const action = { type: 'LEAVE_GAME', payload: gameid };
+        dispatch(action);
+        history.push(`/multiplayer`);
+    }
+
     useEffect(() => {
         const interval = setInterval(() => {
             dispatch({ type: 'FETCH_GAMES' })
@@ -38,29 +44,32 @@ export default function WaitingRoom() {
     return (
 
         <Container>
-            <Grid alignItems="center" justifyContent="center" container spacing={2}>
-                {currentGame[0]?.status !== 'complete' ?
+                {currentGame[0]?.status !== 'completed' ?
                     currentGame?.map((game, i) =>
-                        <Grid item key={i}>
+                        <Grid alignItems="center" justifyContent="center" direction={"column"} container spacing={2}>
+                            <Typography variant="h2" sx={{ my: 3 }} color='primary'>Waiting for players ({game.players.length}/8)</Typography>
                             <Paper sx={{ p: 1, m: 1 }} >
-                                <Typography variant="h3">Waiting for players ({game.players.length}/8)</Typography>
-                                {game.players.map((currentPlayer) => <Typography>{currentPlayer.username}</Typography>)}
-                                <Button variant="outlined" onClick={() => history.push('/home')}>Return to Home</Button>
-                                {user.id === game.owner_id ? <Button variant="contained" onClick={handleStart}>Start Game</Button> : ''}
+                                <Grid item key={i}>
+                                    {game.players.map((currentPlayer) => <Typography variant="h4">{currentPlayer.username}</Typography>)}
+                                    <Button sx={{m:1}} variant="outlined" color="secondary" onClick={() => history.push('/home')}>Return to Home</Button>
+                                    {user.id === game.owner_id ? <Button sx={{m:1}} variant="contained" onClick={handleStart}>Start Game</Button> : ''}
+                                    {user.id === game.owner_id ? '' : <Button sx={{m:1}} variant="contained" color="secondary" onClick={handleLeave}>Leave Game</Button>}
+                                </Grid>
                             </Paper>
                         </Grid>
                     )
                     :
-                    <Grid item textAlign='center'>
-                        <Paper sx={{ p: 1, m: 1 }}>
-                            <Typography variant="h3">Game Concluded</Typography>
-                            <Typography variant="body1">Winner: {currentGame[0].players.find((player) => player.user_id === currentGame[0].winner_id).username}</Typography>
-                            <Typography variant="body1">Score: {currentGame[0].players.find((player) => player.user_id === currentGame[0].winner_id).score}</Typography>
-                            <Button variant="outlined" onClick={() => history.push('/home')}>Return to Home</Button>
+                    <Grid container alignItems="center" justifyContent="center" direction={"column"}>
+                        <Typography sx={{ my: 3 }} color='primary' variant="h2">Game Concluded</Typography>
+                        <Paper sx={{ p: 1, m: 2 }}>
+                        <Grid item >
+                            <Typography sx={{m:1}} variant="h4">Winner: {currentGame[0].players.find((player) => player.user_id === currentGame[0].winner_id).username}</Typography>
+                            <Typography sx={{m:1}} variant="h4">Score: {currentGame[0].players.find((player) => player.user_id === currentGame[0].winner_id).score}</Typography>
+                            <Button sx={{my:1}} fullWidth variant="outlined" color='secondary' onClick={() => history.push('/home')}>Return to Home</Button>
+                        </Grid>
                         </Paper>
                     </Grid>
                 }
-            </Grid>
         </Container>
 
     )

@@ -61,7 +61,7 @@ export default function DashboardScreen() {
     return (
 
         <Container>
-            <Typography color='primary' variant="h3">Dashboard</Typography>
+            <Typography color='primary' sx={{my:3}} variant="h2">Dashboard</Typography>
             {usersGames?.map((item, i) =>
                 <Paper sx={{ p: 1, m: 1 }} key={i}>
                     <Grid alignItems="center" justifyContent="center" container spacing={2}>
@@ -75,7 +75,7 @@ export default function DashboardScreen() {
                             <Typography variant="body2">Current game status: </Typography><Typography variant="body1" fontWeight={700}>{item.status}</Typography>
                         </Grid>
                         <Grid item xs={3} textAlign="center">
-                            {item.status === 'inprogress' ? <Button variant="contained" data-gameid={item.id} onClick={handleResume}>Resume Game</Button> : <Button variant="outlined" data-gameid={item.id} onClick={handleLobby}>Back to Lobby</Button>}
+                            {item.status === 'inprogress' ? <Button variant="contained" data-gameid={item.id} onClick={handleResume}>Resume Game</Button> : <Button variant="outlined" color='secondary' data-gameid={item.id} onClick={handleLobby}>Back to Lobby</Button>}
                         </Grid>
                     </Grid>
                 </Paper>

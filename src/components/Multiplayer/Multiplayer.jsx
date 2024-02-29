@@ -25,7 +25,7 @@ export default function Multiplayer() {
 
     return (
         <Container>
-            <Typography color='primary' variant="h3">Multiplayer</Typography>
+            <Typography color='primary' sx={{my:3}} variant="h2">Multiplayer</Typography>
             {joinableGames?.map((game, i) =>
                 <Paper sx={{ p: 1, m: 1 }} key={i}>
                     <Grid alignItems="center" justifyContent="center" container spacing={2}>
