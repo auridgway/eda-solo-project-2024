@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-import { Container, TextField } from "@mui/material";
-import Paper from '@mui/material/Paper';
+import { TextField } from "@mui/material";
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -78,16 +77,17 @@ function LoginForm() {
           type="submit"
           name="submit"
           value="Log In"
-          sx={{m:0.5}}
+          sx={{ m: 0.5 }}
         >
           Log In
         </Button>
+
         <Button
           variant='contained'
-          color='info'
+          color='secondary'
           type="button"
           className="btn btn_asLink"
-          sx={{m:0.5}}
+          sx={{ m: 0.5 }}
           onClick={() => {
             history.push('/registration');
           }}

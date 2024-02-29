@@ -28,6 +28,7 @@ function LoginPage() {
             }}
             transition={{
               duration: 1.5,
+              type: "spring"
             }}
             exit={{ 
               x: 100,
