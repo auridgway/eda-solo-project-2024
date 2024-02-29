@@ -19,7 +19,7 @@ function LoginPage() {
         justifyContent="center"
         sx={{ minHeight: '100vh' }}
       >
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           <AnimatedPaper sx={{ p: 5, m: 1 }}
             animate={{
               scale: [0, 1],

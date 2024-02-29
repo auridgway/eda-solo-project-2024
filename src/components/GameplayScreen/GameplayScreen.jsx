@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import DiceComponent from "../DiceComponent/DiceComponent"
-
+import LinearProgress from '@mui/material/LinearProgress';
 
 
 function getCurrentTurn(thisGame) {
@@ -32,6 +32,7 @@ export default function GameplayScreen() {
     const history = useHistory();
     const games = useSelector(store => store.games)
     const dice = useSelector(store => store.dice)
+    const user = useSelector(store => store.user)
 
     const currentGame = games.find(game => game.id === Number(gameid));
     let currentTurn = {};
@@ -54,7 +55,7 @@ export default function GameplayScreen() {
     }, [currentGame])
 
     if (currentGame === undefined || games.length <= 0 || currentGame.rounds[0] === undefined) {
-        return <h1>Loading...</h1>
+        return <LinearProgress color="secondary" />
     } else {
         currentTurn = getCurrentTurn(currentGame);
         currentPlayer = currentGame.players.find((player) => player.user_id === currentTurn.player_id).username;
@@ -82,12 +83,12 @@ export default function GameplayScreen() {
     return (
         <Container>
             <Typography color='primary' variant="h3">{currentGame?.lobby_name}</Typography>
-            {currentGame.winner_id === undefined ?
+            {currentGame.status !== 'complete' ?
                 <Grid container spacing={2} direction='row'>
                     <Grid item xs={8}>
                         {/* actual game space is right here */}
                         <Paper sx={{ p: 1, m: 1 }} >
-                            <Grid container direction='column' xs={12}>
+                            <Grid container direction='column'>
                                 <Grid container spacing={2} direction='row'>
                                     <Grid item xs={2}>
                                         <Typography fontWeight={700}>Player's Turn:</Typography>
@@ -118,10 +119,10 @@ export default function GameplayScreen() {
                             </Grid>
                             <Grid container alignItems="center" justifyContent="center" direction='row' spacing={2}>
                                 <Grid item textAlign='center' xs={6}>
-                                    <Button sx={{ px: 14 }} variant="contained" color='info' onClick={handleRoll}>Roll</Button>
+                                    {currentGame.current_turn===user.id?<Button sx={{ px: 14 }} variant="contained" color='info' onClick={handleRoll}>Roll</Button>:''}
                                 </Grid>
                                 <Grid item textAlign='center' xs={6}>
-                                    <Button sx={{ px: 11.5 }} variant="contained" color='success' onClick={handleSave}>Save Score</Button>
+                                {currentGame.current_turn===user.id?<Button sx={{ px: 11.5 }} variant="contained" color='success' onClick={handleSave}>Save Score</Button>:''}
                                 </Grid>
                             </Grid>
                         </Paper>
@@ -299,27 +300,6 @@ export default function GameplayScreen() {
                 </Grid>
             }
         </Container>
-
-
-
-        // <div>
-        //     <div>
-        //         <p>{currentGame?.id}</p>
-        //         <div>
-        //             <div>
-        //                 <p>current turn:{currentGame.current_turn}</p>
-        //                 <p>current score:{currentTurn.current_score}</p>
-        //                 <p>turn score: {currentTurn.turn_score ? currentTurn.turn_score : 0}</p>
-        //                 <DiceComponents gameId={gameid} games={games} />
-        //                 {currentGame?.roundNumber === 0 ? '' : <button onClick={handleRoll}>Roll</>}
-        //                 {currentGame?.roundNumber === 0 ? '' : <button onClick={handleSave}>Save Score</>}
-        //             </div>
-        //         </div>
-        //     </div>
-        //     <div>
-        //         <button onClick={() => history.push('/home')}>return to home</button>
-        //     </div>
-        // </div>
     )
 }
 

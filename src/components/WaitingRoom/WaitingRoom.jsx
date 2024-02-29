@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import { useEffect } from "react";
 
 export default function WaitingRoom() {
     let { gameid } = useParams();
@@ -22,14 +23,26 @@ export default function WaitingRoom() {
         history.push(`/game/${gameid}`);
     }
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch({ type: 'FETCH_GAMES' })
+        }, 2000);
+        return () => clearInterval(interval);
+    });
+
+    if (currentGame[0]?.status === 'inprogress') {
+        history.push(`/game/${gameid}`);
+    }
+
+
     return (
 
         <Container>
             <Grid alignItems="center" justifyContent="center" container spacing={2}>
-                {currentGame[0].status !== 'complete' ?
+                {currentGame[0]?.status !== 'complete' ?
                     currentGame?.map((game, i) =>
                         <Grid item key={i}>
-                            <Paper sx={{ p: 1, m: 1 }}>
+                            <Paper sx={{ p: 1, m: 1 }} >
                                 <Typography variant="h3">Waiting for players ({game.players.length}/8)</Typography>
                                 {game.players.map((currentPlayer) => <Typography>{currentPlayer.username}</Typography>)}
                                 <Button variant="outlined" onClick={() => history.push('/home')}>Return to Home</Button>

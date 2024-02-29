@@ -20,6 +20,7 @@ export default function DiceComponent(props) {
 
     const games = useSelector(store => store.games);
     const diceInfo = useSelector(store => store.dice);
+    const user = useSelector(store => store.user);
     const dispatch = useDispatch();
     const gameid = props.gameId;
 
@@ -63,14 +64,14 @@ export default function DiceComponent(props) {
     // let server check for all melds at start
     // let server check for farkles
     return (
-        <>
-            <Grid container spacing={2} alignItems="center" justifyContent="center" direction='row'>
-                {diceInfo?.map((item, i) =>
-                    <Grid textAlign='center' item xs={4} key={i}>
-                        <Typography fontSize={'200%'} onClick={() => handleClick(i)}>{item.locked === false ? '🔓' : '🔒'}</Typography>
-                        <Typography fontSize={'200%'} >{item.value}</Typography>
-                    </Grid>)}
-            </Grid>
-        </>
+
+        <Grid container spacing={2} alignItems="center" justifyContent="center" direction='row'>
+            {diceInfo?.map((item, i) =>
+                <Grid textAlign='center' item xs={4} key={i}>
+                    {currentGame.current_turn === user.id ? <Typography fontSize={'200%'} onClick={() => handleClick(i)}>{item.locked === false ? '🔓' : '🔒'}</Typography> : ''}
+                    <Typography fontSize={'200%'} >{item.value}</Typography>
+                </Grid>)}
+        </Grid>
+
     )
 }

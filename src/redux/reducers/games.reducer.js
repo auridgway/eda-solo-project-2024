@@ -8,6 +8,7 @@ const gamesReducer = (state = [], action) => {
       const diceChecked = action.payload.response.data.dice;
       let currentGame = action.payload.currentGame;
       const score = action.payload.response.data.score;
+      console.log(score);
       const players = currentGame.players
       const currentPlayer = players.filter((player) => player.user_id === currentGame.current_turn)[0];
 
@@ -20,10 +21,10 @@ const gamesReducer = (state = [], action) => {
         currentGame.rounds[0].rounds_players.find((rp) => rp.player_id === currentPlayer.user_id)[propLocked] = diceChecked[i].locked;
         currentGame.rounds[0].rounds_players.find((rp) => rp.player_id === currentPlayer.user_id)[propScored] = diceChecked[i].scored;
       }
-
+      
       // currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].current_score = score;
-      currentGame.rounds[0].rounds_players[currentGame.rounds[0].rounds_players.length - 1].turn_score = score;
-
+      currentGame.rounds[0].rounds_players.find((rp) => rp.player_id === currentPlayer.user_id).turn_score = score;
+      
       currentGameState[(currentGameState.findIndex(game => game.id === currentGame.id))] = currentGame;
 
       return currentGameState;
