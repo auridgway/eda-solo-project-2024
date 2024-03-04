@@ -32,7 +32,7 @@ export default function WaitingRoom() {
     useEffect(() => {
         const interval = setInterval(() => {
             dispatch({ type: 'FETCH_GAMES' })
-        }, 2000);
+        }, 1000);
         return () => clearInterval(interval);
     });
 

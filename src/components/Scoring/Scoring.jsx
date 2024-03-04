@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 export default function Scoring() {  
     return (
         <Paper sx={{ p: 1, m: 1 }} >
-            <Typography variant="h5" textAlign="center">Scoring Rules</Typography>
+            <Typography color='primary' variant="h5" textAlign="center">Scoring Rules</Typography>
             <Grid container alignItems="center" justifyContent="center" spacing={2} direction='row'>
                 <Grid item xs={6}>
                     <Typography textAlign="center" fontWeight={700}>Combination</Typography>

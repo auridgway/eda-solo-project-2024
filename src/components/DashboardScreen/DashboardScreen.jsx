@@ -5,6 +5,7 @@ import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { useEffect } from "react";
 
 
 
@@ -24,6 +25,13 @@ export default function DashboardScreen() {
     const games = useSelector(store => store.games)
     const user = useSelector(store => store.user)
     const usersGames = userGames();
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch({ type: 'FETCH_GAMES' })
+        }, 1000);
+        return () => clearInterval(interval);
+    });
 
     function userGames() {
         const tempArray = [];
@@ -61,7 +69,7 @@ export default function DashboardScreen() {
     return (
 
         <Container>
-            <Typography color='primary' sx={{my:3}} variant="h2">Dashboard</Typography>
+            <Typography color='primary' sx={{ my: 3 }} variant="h2">Dashboard</Typography>
             {usersGames?.map((item, i) =>
                 <Paper sx={{ p: 1, m: 1 }} key={i}>
                     <Grid alignItems="center" justifyContent="center" container spacing={2}>

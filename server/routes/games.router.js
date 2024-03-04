@@ -207,7 +207,10 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
       // ROLL NEW DICE FOR EACH PLAYER, ETC.
       console.log(`All players have taken their turn, making new turn`);
       const updatedGame = await createNewTurnByGameId(gameId);
-      res.send(updatedGame);
+      res.send({
+        hasFarkled: finalResult.rows[0].farkle,
+        gameResult: updatedGame
+      });
       return;
     }
 
@@ -218,7 +221,10 @@ router.post('/roll/:gameid', rejectUnauthenticated, async (req, res) => {
     //  If this player's turn is the last one left:
     //    1. Create a new Round, RoundsPlayer entry (re-roll dice for all players)
     //      (insert new record, roll 6 dice, default values, etc) for each player
-    res.send((await getGameById(gameId)));
+    res.send({
+      hasFarkled: finalResult.rows[0].farkle,
+      gameResult: (await getGameById(gameId))
+    });
   } catch (error) {
     console.log(error);
     res.sendStatus(400);
@@ -254,7 +260,7 @@ function checkMelds(diceValues, checkUnScored = false) {
   //TWO LOCKED DICE - will flow to bottom to be taken care of
   //THREE LOCKED DICE [1,1,4,4,4]
   if (currentDice.length === 3) {
-    console.log('dice at this thing',currentDice);
+    console.log('dice at this thing', currentDice);
     if ((currentDice[0].value === currentDice[1].value) && (currentDice[1].value === currentDice[2].value)) {
       return applyThreeScore(2, tempScore, currentDice);
     }

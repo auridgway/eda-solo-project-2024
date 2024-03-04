@@ -5,12 +5,20 @@ import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { useEffect } from "react";
 
 export default function Multiplayer() {
     const games = useSelector(store => store.games);
     const joinableGames = games?.filter((game) => game.status === 'created');
     const history = useHistory();
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch({ type: 'FETCH_GAMES' })
+        }, 1000);
+        return () => clearInterval(interval);
+    });
 
     function handleJoin(gameId) {
 

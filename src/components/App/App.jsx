@@ -5,23 +5,19 @@ import {
   Route,
   Switch,
 } from 'react-router-dom';
-
 import { useDispatch, useSelector } from 'react-redux';
-
 import Nav from '../Nav/Nav';
-
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
-
-import LandingPage from '../LandingPage/LandingPage';
 import LoginPage from '../LoginPage/LoginPage';
 import RegisterPage from '../RegisterPage/RegisterPage';
-
 import './App.css';
 import DashboardScreen from '../DashboardScreen/DashboardScreen';
 import GameplayScreen from '../GameplayScreen/GameplayScreen';
 import Multiplayer from '../Multiplayer/Multiplayer';
 import NewGame from '../NewGame/NewGame';
 import WaitingRoom from '../WaitingRoom/WaitingRoom';
+
+
 
 function App() {
   const dispatch = useDispatch();
@@ -124,7 +120,7 @@ function App() {
               <Redirect to="/dashboard" />
               :
               // Otherwise, show the Landing page
-              <LandingPage />
+              <LoginPage />
             }
           </Route>
 

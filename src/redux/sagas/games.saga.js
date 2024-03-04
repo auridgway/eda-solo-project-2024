@@ -12,7 +12,9 @@ function* adjustDiceSaga(action) {
 }
 
 function* rollDiceSaga(action) {
-    yield axios.post(`/api/games/roll/${action.payload.game_id}`, action.payload.dice);
+    const response = yield axios.post(`/api/games/roll/${action.payload.game_id}`, action.payload.dice);
+
+    yield put({ type: 'SET_FARKLE', payload: response.data });
     yield put({ type: 'FETCH_GAMES' });
 }
 
