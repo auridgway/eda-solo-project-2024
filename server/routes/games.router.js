@@ -241,7 +241,7 @@ router.post('/lock/', rejectUnauthenticated, (req, res) => {
 
 });
 
-export function checkMelds(diceValues, checkUnScored = false) {
+function checkMelds(diceValues, checkUnScored = false) {
   // dicevalues [{value, locked}...]
   // grabs the locked dice and filters them by values 1-6
   let currentDice = diceValues.filter((dice) => (!checkUnScored) ? dice.locked === true && dice.scored === false : dice.scored === false)
